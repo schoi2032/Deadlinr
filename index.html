@@ -195,7 +195,6 @@
     .prio-low { background: #d1fae5; color: #059669; border-color: #a7f3d0; }
     .prio-overdue { background: #450a0a; color: #f87171; border-color: #991b1b; }
 
-    /* Calendar Visuals! YAY! */
     .calendar-grid {
       display: grid;
       gap: 12px;
@@ -370,7 +369,6 @@
           </div>
         </div>
         <div class="calendar-grid grid-day" id="calendar-grid">
-          <!-- Populated via JS -->
         </div>
       </section>
     </div>
@@ -424,7 +422,7 @@
     let classes = JSON.parse(localStorage.getItem(CLASS_KEY)) || ["General"];
     
     let calendarCurrentDate = new Date();
-    let currentCalendarView = 'day'; // 'day', 'week', 'month'
+    let currentCalendarView = 'day'; 
 
     function switchView(viewId) {
       document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
@@ -502,14 +500,14 @@
 
     function calculatePriority(dueDate, status) {
         if (!dueDate) return { label: 'Low', class: 'prio-low', score: 0 };
-        const today = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalDateString(new Date());
         
-        if (status !== 'done' && dueDate < today) {
+        if (status !== 'done' && dueDate < todayStr) {
             return { label: 'Overdue', class: 'prio-overdue', score: 4 };
         }
 
         const todayObj = new Date();
-        const dueObj = new Date(dueDate);
+        const dueObj = new Date(dueDate + 'T00:00:00');
         const diffDays = Math.ceil((dueObj - todayObj) / (1000 * 60 * 60 * 24));
 
         if (diffDays <= 3) return { label: 'High', class: 'prio-high', score: 3 };
@@ -517,11 +515,18 @@
         return { label: 'Low', class: 'prio-low', score: 1 };
     }
 
+    function getLocalDateString(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
     function updateStats() {
-      const today = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateString(new Date());
       const done = masterData.filter(t => t.status === 'done').length;
       const progress = masterData.filter(t => t.status === 'in-progress').length;
-      const overdue = masterData.filter(t => t.status !== 'done' && t.date && t.date < today).length;
+      const overdue = masterData.filter(t => t.status !== 'done' && t.date && t.date < todayStr).length;
       
       document.getElementById('stat-total').textContent = masterData.length;
       document.getElementById('stat-done').textContent = done;
@@ -561,7 +566,7 @@
     }
 
     function renderTasksBoard() {
-      const today = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateString(new Date());
       const lists = {
         todo: document.querySelector("#col-todo .task-list"),
         progress: document.querySelector("#col-progress .task-list"),
@@ -573,7 +578,7 @@
 
       masterData.forEach(t => {
         let key = t.status === 'in-progress' ? 'progress' : t.status;
-        if (t.status !== 'done' && t.date && t.date < today) key = 'overdue';
+        if (t.status !== 'done' && t.date && t.date < todayStr) key = 'overdue';
         
         const card = document.createElement("div");
         card.className = "mini-task-card";
@@ -582,7 +587,6 @@
       });
     }
 
-    // --- CALENDAR LOGIC ---
 
     function setCalendarView(view) {
       currentCalendarView = view;
@@ -614,7 +618,7 @@
       grid.innerHTML = "";
       grid.className = `calendar-grid grid-${currentCalendarView}`;
       const label = document.getElementById('calendar-view-label');
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateString(new Date());
 
       if (currentCalendarView === 'day') {
         label.textContent = calendarCurrentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -626,7 +630,6 @@
         
         label.textContent = `Week of ${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
-        // Add headers
         ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(h => {
             const head = document.createElement('div');
             head.className = 'calendar-day-header';
@@ -651,9 +654,6 @@
         });
 
         const firstDayOfMonth = new Date(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth(), 1);
-        const lastDayOfMonth = new Date(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth() + 1, 0);
-        
-        // Start from the Sunday before the first day of the month
         const startDay = new Date(firstDayOfMonth);
         startDay.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
 
@@ -667,7 +667,7 @@
     }
 
     function createDayCard(date, container, todayStr, isOtherMonth = false) {
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(date);
       const dayDiv = document.createElement("div");
       dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''} ${isOtherMonth ? 'other-month' : ''}`;
       
@@ -685,7 +685,6 @@
       
       container.appendChild(dayDiv);
     }
-
 
     function renderProjects() {
       const body = document.getElementById("projects-body");
