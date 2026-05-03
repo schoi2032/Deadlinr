@@ -96,7 +96,7 @@
       border-radius: 15px;
       position: relative;
     }
-    .stat-card::before, .content-section::before, .mini-task-card::before {
+    .stat-card::before, .content-section::before, .mini-task-card::before, .calendar-day::before {
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -139,12 +139,23 @@
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
+      white-space: nowrap;
     }
     .controls .btn-secondary {
       background: transparent;
       border: 1px solid;
       border-image: var(--border-gradient) 1;
       color: var(--text-main);
+    }
+    .controls .btn-tab {
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+    .controls .btn-tab.active {
+      background: var(--accent-blue);
+      color: white;
     }
 
     .deadlinr-table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -177,13 +188,79 @@
         text-transform: uppercase;
         text-align: center;
         width: auto;
-        border-image: none !important;
         border: 1px solid transparent;
     }
     .prio-high { background: #fee2e2; color: #ef4444; border-color: #fecaca; }
     .prio-med { background: #fef3c7; color: #d97706; border-color: #fde68a; }
     .prio-low { background: #d1fae5; color: #059669; border-color: #a7f3d0; }
     .prio-overdue { background: #450a0a; color: #f87171; border-color: #991b1b; }
+
+    /* Calendar Visuals! YAY! */
+    .calendar-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .calendar-grid.grid-week, .calendar-grid.grid-month {
+      grid-template-columns: repeat(7, 1fr);
+    }
+    .calendar-grid.grid-day {
+      grid-template-columns: 1fr;
+    }
+
+    .calendar-day-header {
+      text-align: center;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      padding-bottom: 10px;
+    }
+    .calendar-day {
+      background: rgba(255,255,255,0.03);
+      min-height: 120px;
+      border-radius: 12px;
+      padding: 10px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .calendar-grid.grid-month .calendar-day {
+        min-height: 80px;
+    }
+    .calendar-grid.grid-day .calendar-day {
+        min-height: 250px;
+        background: rgba(255,255,255,0.05);
+    }
+    .calendar-day.today {
+      background: rgba(59, 130, 246, 0.1);
+    }
+    .calendar-day.other-month {
+        opacity: 0.3;
+    }
+    .day-number {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    .calendar-task-item {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: var(--accent-blue);
+      color: white;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-left: 3px solid var(--accent-green);
+    }
+    .calendar-task-item.done {
+      background: var(--accent-green);
+      opacity: 0.7;
+      text-decoration: line-through;
+    }
 
     .tasks-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
     .task-col { background: rgba(0,0,0,0.05); border-radius: 12px; padding: 15px; min-height: 400px; }
@@ -276,19 +353,25 @@
     </div>
 
     <div id="view-calendar" class="view-section">
-      <section class="content-section" style="min-height: 600px;">
+      <section class="content-section">
         <div class="section-header">
-          <h2>Upcoming Schedule</h2>
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <h2 id="calendar-view-label">Calendar</h2>
+            <div class="controls">
+                <button class="btn-tab active" id="tab-day" onclick="setCalendarView('day')">Daily</button>
+                <button class="btn-tab" id="tab-week" onclick="setCalendarView('week')">Weekly</button>
+                <button class="btn-tab" id="tab-month" onclick="setCalendarView('month')">Monthly</button>
+            </div>
+          </div>
           <div class="controls">
-            <button class="btn-secondary" onclick="addClassFromPrompt()">New Class</button>
+            <button class="btn-secondary" onclick="navigateCalendar(-1)">← Prev</button>
+            <button class="btn-secondary" onclick="navigateCalendar(1)">Next →</button>
+            <button onclick="goToToday()">Today</button>
           </div>
         </div>
-        <table class="deadlinr-table" id="calendar-table">
-          <thead>
-            <tr><th>Date</th><th>Class</th><th>Assignment</th><th>Status</th></tr>
-          </thead>
-          <tbody id="calendar-body"></tbody>
-        </table>
+        <div class="calendar-grid grid-day" id="calendar-grid">
+          <!-- Populated via JS -->
+        </div>
       </section>
     </div>
 
@@ -339,6 +422,9 @@
     
     let masterData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let classes = JSON.parse(localStorage.getItem(CLASS_KEY)) || ["General"];
+    
+    let calendarCurrentDate = new Date();
+    let currentCalendarView = 'day'; // 'day', 'week', 'month'
 
     function switchView(viewId) {
       document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
@@ -496,18 +582,110 @@
       });
     }
 
-    function renderCalendar() {
-      const body = document.getElementById("calendar-body");
-      if (!body) return;
-      body.innerHTML = "";
-      [...masterData]
-        .sort((a,b) => (a.date || '9999') > (b.date || '9999') ? 1 : -1)
-        .forEach(t => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${t.date || '---'}</td><td>${t.class}</td><td>${t.name || 'Untitled'}</td><td>${t.status}</td>`;
-          body.appendChild(tr);
-        });
+    // --- CALENDAR LOGIC ---
+
+    function setCalendarView(view) {
+      currentCalendarView = view;
+      document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
+      document.getElementById(`tab-${view}`).classList.add('active');
+      renderCalendar();
     }
+
+    function navigateCalendar(direction) {
+      if (currentCalendarView === 'day') {
+        calendarCurrentDate.setDate(calendarCurrentDate.getDate() + direction);
+      } else if (currentCalendarView === 'week') {
+        calendarCurrentDate.setDate(calendarCurrentDate.getDate() + (direction * 7));
+      } else if (currentCalendarView === 'month') {
+        calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + direction);
+      }
+      renderCalendar();
+    }
+
+    function goToToday() {
+      calendarCurrentDate = new Date();
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById("calendar-grid");
+      if (!grid) return;
+      
+      grid.innerHTML = "";
+      grid.className = `calendar-grid grid-${currentCalendarView}`;
+      const label = document.getElementById('calendar-view-label');
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      if (currentCalendarView === 'day') {
+        label.textContent = calendarCurrentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        createDayCard(new Date(calendarCurrentDate), grid, todayStr);
+      } 
+      else if (currentCalendarView === 'week') {
+        const startOfWeek = new Date(calendarCurrentDate);
+        startOfWeek.setDate(calendarCurrentDate.getDate() - calendarCurrentDate.getDay());
+        
+        label.textContent = `Week of ${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
+        // Add headers
+        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(h => {
+            const head = document.createElement('div');
+            head.className = 'calendar-day-header';
+            head.textContent = h;
+            grid.appendChild(head);
+        });
+
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(startOfWeek);
+          d.setDate(startOfWeek.getDate() + i);
+          createDayCard(d, grid, todayStr);
+        }
+      } 
+      else if (currentCalendarView === 'month') {
+        label.textContent = calendarCurrentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        
+        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(h => {
+            const head = document.createElement('div');
+            head.className = 'calendar-day-header';
+            head.textContent = h;
+            grid.appendChild(head);
+        });
+
+        const firstDayOfMonth = new Date(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth(), 1);
+        const lastDayOfMonth = new Date(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth() + 1, 0);
+        
+        // Start from the Sunday before the first day of the month
+        const startDay = new Date(firstDayOfMonth);
+        startDay.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
+
+        for (let i = 0; i < 42; i++) {
+          const d = new Date(startDay);
+          d.setDate(startDay.getDate() + i);
+          const isOtherMonth = d.getMonth() !== calendarCurrentDate.getMonth();
+          createDayCard(d, grid, todayStr, isOtherMonth);
+        }
+      }
+    }
+
+    function createDayCard(date, container, todayStr, isOtherMonth = false) {
+      const dateStr = date.toISOString().split('T')[0];
+      const dayDiv = document.createElement("div");
+      dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''} ${isOtherMonth ? 'other-month' : ''}`;
+      
+      const dayLabel = currentCalendarView === 'day' ? date.toLocaleDateString('en-US', {weekday: 'short'}) + ' ' : '';
+      dayDiv.innerHTML = `<div class="day-number">${dayLabel}${date.getDate()}</div>`;
+      
+      const dayTasks = masterData.filter(t => t.date === dateStr);
+      dayTasks.forEach(t => {
+        const taskDiv = document.createElement("div");
+        taskDiv.className = `calendar-task-item ${t.status === 'done' ? 'done' : ''}`;
+        taskDiv.textContent = t.name || "(No Name)";
+        taskDiv.title = `${t.class}: ${t.name}`;
+        dayDiv.appendChild(taskDiv);
+      });
+      
+      container.appendChild(dayDiv);
+    }
+
 
     function renderProjects() {
       const body = document.getElementById("projects-body");
