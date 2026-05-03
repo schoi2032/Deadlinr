@@ -16,6 +16,7 @@
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --border-gradient: linear-gradient(135deg, #3b82f6, #22c55e);
+      --modal-overlay: rgba(0, 0, 0, 0.8);
     }
 
     body.light-theme {
@@ -24,6 +25,7 @@
       --card-bg: #ffffff;
       --text-main: #1e293b;
       --text-muted: #64748b;
+      --modal-overlay: rgba(0, 0, 0, 0.4);
     }
 
     * { box-sizing: border-box; }
@@ -96,7 +98,7 @@
       border-radius: 15px;
       position: relative;
     }
-    .stat-card::before, .content-section::before, .mini-task-card::before, .calendar-day::before {
+    .stat-card::before, .content-section::before, .mini-task-card::before, .calendar-day::before, .modal-content::before {
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -168,7 +170,7 @@
     }
     .deadlinr-table td { padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
-    .assignment-input, .class-select, .status-select, .due-date-input, .priority-badge {
+    .assignment-input, .class-select, .status-select, .due-date-input, .priority-badge, .modal-input {
       background: rgba(0,0,0,0.1);
       border: 1px solid transparent;
       border-image: var(--border-gradient) 1;
@@ -194,7 +196,6 @@
     .prio-med { background: #fef3c7; color: #d97706; border-color: #fde68a; }
     .prio-low { background: #d1fae5; color: #059669; border-color: #a7f3d0; }
     .prio-overdue { background: #450a0a; color: #f87171; border-color: #991b1b; }
-
     .calendar-grid {
       display: grid;
       gap: 12px;
@@ -295,9 +296,92 @@
     .delete-row-btn:hover { background: #ef4444; color: white; }
     
     .danger-btn { background: #ef4444 !important; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    #task-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--modal-overlay);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(5px);
+    }
+    .modal-content {
+      background: var(--card-bg);
+      width: 90%;
+      max-width: 450px;
+      padding: 30px;
+      border-radius: 20px;
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      animation: modalSlide 0.3s ease-out;
+    }
+    @keyframes modalSlide { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-content h2 { margin-top: 0; font-family: 'Oswald', sans-serif; letter-spacing: 1px; }
+    .modal-form-group { margin-bottom: 15px; }
+    .modal-form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+    .modal-input { width: 100%; box-sizing: border-box; font-size: 1rem; }
+    .modal-actions { display: flex; gap: 15px; margin-top: 25px; }
+    .modal-actions button { flex: 1; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; transition: transform 0.2s; }
+    .modal-actions button:hover { transform: translateY(-2px); }
+    
+    .btn-create-task { 
+      background: var(--border-gradient);
+      color: white;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-cancel-task {
+      background: transparent !important;
+      color: var(--text-main);
+      position: relative;
+      border: 1px solid transparent; 
+    }
+    .btn-cancel-task::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: inherit;
+      padding: 1.5px;
+      background: var(--border-gradient);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: destination-out;
+      mask-composite: exclude;
+    }
   </style>
 </head>
 <body class="dark-theme">
+  <div id="task-modal">
+    <div class="modal-content">
+      <h2>Add New Task</h2>
+      <div class="modal-form-group">
+        <label>Assignment Name</label>
+        <input type="text" id="m-task-name" class="modal-input" placeholder="e.g. History Essay">
+      </div>
+      <div class="modal-form-group">
+        <label>Class</label>
+        <select id="m-task-class" class="modal-input"></select>
+      </div>
+      <div class="modal-form-group">
+        <label>Status</label>
+        <select id="m-task-status" class="modal-input">
+          <option value="todo">To Do</option>
+          <option value="in-progress">In Progress</option>
+          <option value="done">Completed</option>
+        </select>
+      </div>
+      <div class="modal-form-group">
+        <label>Due Date</label>
+        <input type="date" id="m-task-date" class="modal-input">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel-task" onclick="closeTaskModal()">Cancel</button>
+        <button class="btn-create-task" id="save-task-btn" onclick="submitTaskModal()">Create Task</button>
+      </div>
+    </div>
+  </div>
+
   <nav id="sidebar">
     <div id="logo-container">
       <img src="logo.png" id="logo-img" alt="Logo">
@@ -330,7 +414,7 @@
           <h2>Active Deadlines</h2>
           <div class="controls">
             <button class="btn-secondary" onclick="addClassFromPrompt()">New Class</button>
-            <button onclick="addRow()">Add Row +</button>
+            <button onclick="openTaskModal()">Add Task +</button>
           </div>
         </div>
         <table class="deadlinr-table" id="main-table">
@@ -437,6 +521,43 @@
       localStorage.setItem(CLASS_KEY, JSON.stringify(classes));
       updateStats();
     }
+    function openTaskModal() {
+        const classSelect = document.getElementById('m-task-class');
+        classSelect.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join('');
+        
+        document.getElementById('m-task-name').value = '';
+        document.getElementById('m-task-status').value = 'todo';
+        document.getElementById('m-task-date').value = getLocalDateString(new Date());
+        
+        document.getElementById('task-modal').style.display = 'flex';
+    }
+
+    function closeTaskModal() {
+        document.getElementById('task-modal').style.display = 'none';
+    }
+
+    function submitTaskModal() {
+        const name = document.getElementById('m-task-name').value;
+        const className = document.getElementById('m-task-class').value;
+        const status = document.getElementById('m-task-status').value;
+        const date = document.getElementById('m-task-date').value;
+
+        if (!name.trim()) {
+            return;
+        }
+
+        masterData.push({ 
+            name: name.trim(), 
+            class: className, 
+            status: status, 
+            date: date, 
+            priority: "med" 
+        });
+
+        save();
+        renderAll();
+        closeTaskModal();
+    }
 
     function addClassFromPrompt() {
       const name = prompt("Enter New Class Name:");
@@ -465,18 +586,6 @@
           renderAll();
         }
       }
-    }
-
-    function addRow() {
-      masterData.push({ 
-        name: "", 
-        class: classes[0], 
-        status: "todo", 
-        date: "", 
-        priority: "med" 
-      });
-      save();
-      renderAll();
     }
 
     function updateTask(index, key, val) {
@@ -586,7 +695,6 @@
         if (lists[key]) lists[key].appendChild(card);
       });
     }
-
 
     function setCalendarView(view) {
       currentCalendarView = view;
