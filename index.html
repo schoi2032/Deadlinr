@@ -159,7 +159,7 @@
     .preset-btn:hover { background: rgba(255,255,255,0.1); color: white; }
     .preset-btn.active { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(59,130,246,0.1); }
 
-    #modal-overlay {
+    #modal-overlay, #custom-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
       z-index: 3000; display: none; align-items: center; justify-content: center;
     }
@@ -173,6 +173,23 @@
       padding: 14px 18px; border-radius: 14px; color: white; font-size: 1rem; margin-bottom: 24px;
     }
     .modal-btns { display: flex; gap: 16px; margin-top: 10px; }
+
+    .custom-option {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px; background: rgba(255,255,255,0.03); border-radius: 16px;
+      margin-bottom: 12px; border: 1px solid var(--card-border); transition: 0.2s;
+    }
+    .custom-option:hover { background: rgba(255,255,255,0.06); }
+    .toggle {
+      width: 44px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 20px;
+      position: relative; cursor: pointer; transition: 0.3s;
+    }
+    .toggle::after {
+      content: ''; position: absolute; top: 4px; left: 4px; width: 16px; height: 16px;
+      background: white; border-radius: 50%; transition: 0.3s;
+    }
+    .toggle.active { background: var(--accent-blue); }
+    .toggle.active::after { left: 24px; }
 
     .empty-state { text-align: center; padding: 60px; }
     .empty-state i { margin-bottom: 16px; opacity: 0.2; }
@@ -230,15 +247,25 @@
       </header>
 
       <div id="page-dashboard" class="page active">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+          <h3 style="font-family: 'Oswald'; font-size: 1.2rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Live Overview</h3>
+          <button onclick="openCustomizer()" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--card-border); padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="settings-2" size="14"></i> Customize
+          </button>
+        </div>
+
         <div class="stat-grid">
           <div class="stat-card"><div><h4>Total</h4><span class="stat-val" id="stat-total">0</span></div><i data-lucide="hash" color="#3b82f6" size="28"></i></div>
           <div class="stat-card"><div><h4>Overdue</h4><span class="stat-val" id="stat-overdue" style="color:var(--accent-red)">0</span></div><i data-lucide="alert-circle" color="#ef4444" size="28"></i></div>
           <div class="stat-card"><div><h4>Crushed</h4><span class="stat-val" id="stat-done">0</span></div><i data-lucide="trophy" color="#10b981" size="28"></i></div>
           <div class="stat-card"><div><h4>High Alert</h4><span class="stat-val" id="stat-high">0</span></div><i data-lucide="flame" color="#f59e0b" size="28"></i></div>
         </div>
-        <div class="content-box">
-          <h3><i data-lucide="sparkles" size="20"></i> Priority Focus</h3>
-          <div id="dashboard-tasks" class="task-list"></div>
+
+        <div id="dashboard-widgets" style="display: grid; grid-template-columns: 1fr; gap: 24px;">
+          <div class="content-box widget" id="widget-tasks">
+            <h3><i data-lucide="sparkles" size="20"></i> Priority Focus</h3>
+            <div id="dashboard-tasks" class="task-list"></div>
+          </div>
         </div>
       </div>
 
@@ -265,14 +292,11 @@
         <div class="content-box" style="text-align: center; padding: 60px;">
           <h3><i data-lucide="timer" size="20"></i> Focus Timer</h3>
           <p style="color: var(--text-secondary); margin-bottom: 20px;">Lock in and clear your list.</p>
-          
           <div class="timer-display" id="timer-display">25:00</div>
-          
           <div class="timer-controls">
             <button class="timer-btn reset" onclick="resetTimer()">Reset</button>
             <button class="timer-btn start" id="timer-toggle" onclick="toggleTimer()">Start Session</button>
           </div>
-          
           <div class="timer-presets">
             <button class="preset-btn active" onclick="setTimer(25)">25m (Focus)</button>
             <button class="preset-btn" onclick="setTimer(5)">5m (Break)</button>
@@ -353,22 +377,39 @@
       </div>
     </div>
   </div>
+  <div id="custom-overlay">
+    <div class="modal">
+      <h2 style="font-family: 'Oswald'; margin-bottom: 20px; font-size: 1.8rem;">Customize Dashboard</h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">Choose which modules appear on your home screen.</p>
+      
+      <div id="customizer-list">
+      </div>
+
+      <div class="modal-btns">
+        <button class="btn-prime" style="width: 100%; padding: 16px; border-radius: 16px; background: white; color: black; border: none; font-weight: 800; cursor: pointer;" onclick="closeCustomizer()">Done</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     let tasks = JSON.parse(localStorage.getItem('deadlinr_tasks')) || [];
     let userName = localStorage.getItem('deadlinr_user') || "";
+    let dashboardConfig = JSON.parse(localStorage.getItem('deadlinr_config')) || {
+        tasks: true,
+        timer: false,
+        calendar: true,
+        stats: true
+    };
+    
     let searchTerm = "";
     let currentViewDate = new Date();
-    
     let timerSeconds = 1500;
     let timerInterval = null;
     let isTimerRunning = false;
 
-    // Run on startup
     window.onload = function() {
         if (userName) {
             setupApp(userName);
-            // Instant show if user exists
             document.getElementById('onboarding').style.display = 'none';
             document.getElementById('app-container').classList.add('visible');
             document.getElementById('app-container').style.opacity = '1';
@@ -377,11 +418,13 @@
         document.getElementById('date-subtitle').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
         renderTasks();
         renderCalendar();
+        applyDashboardConfig();
     };
 
     function saveToStorage() {
         localStorage.setItem('deadlinr_tasks', JSON.stringify(tasks));
         localStorage.setItem('deadlinr_user', userName);
+        localStorage.setItem('deadlinr_config', JSON.stringify(dashboardConfig));
     }
 
     function clearStorage() {
@@ -395,19 +438,17 @@
         input.style.borderColor = "#ef4444";
         return;
       }
-      
       userName = input.value.trim();
       saveToStorage();
       setupApp(userName);
-      
       document.getElementById('onboarding').style.opacity = '0';
       document.getElementById('onboarding').style.transform = 'translateY(-100%)';
-      
       setTimeout(() => {
           document.getElementById('onboarding').style.display = 'none';
           document.getElementById('app-container').classList.add('visible');
           renderTasks();
           renderCalendar();
+          applyDashboardConfig();
       }, 600);
     }
 
@@ -427,62 +468,155 @@
       if (pageId === 'calendar') renderCalendar();
     }
 
+    const WIDGETS = {
+        tasks: { name: 'Focus List', icon: 'layers' },
+        timer: { name: 'Focus Timer', icon: 'timer' },
+        calendar: { name: 'Timeline', icon: 'calendar-days' },
+        stats: { name: 'Analytics', icon: 'trending-up' }
+    };
+
+    function openCustomizer() {
+        const list = document.getElementById('customizer-list');
+        list.innerHTML = Object.keys(WIDGETS).map(key => `
+            <div class="custom-option">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <i data-lucide="${WIDGETS[key].icon}" size="18"></i>
+                    <span style="font-weight:700;">${WIDGETS[key].name}</span>
+                </div>
+                <div class="toggle ${dashboardConfig[key] ? 'active' : ''}" onclick="toggleWidget('${key}')"></div>
+            </div>
+        `).join('');
+        document.getElementById('custom-overlay').style.display = 'flex';
+        lucide.createIcons();
+    }
+
+    function closeCustomizer() {
+        document.getElementById('custom-overlay').style.display = 'none';
+        applyDashboardConfig();
+    }
+
+    function toggleWidget(key) {
+        dashboardConfig[key] = !dashboardConfig[key];
+        saveToStorage();
+        openCustomizer(); 
+    }
+
+    function applyDashboardConfig() {
+        const container = document.getElementById('dashboard-widgets');
+        container.innerHTML = "";
+
+        if (dashboardConfig.tasks) {
+            container.innerHTML += `
+                <div class="content-box">
+                    <h3><i data-lucide="sparkles" size="20"></i> Priority Focus</h3>
+                    <div id="dashboard-tasks" class="task-list"></div>
+                </div>
+            `;
+        }
+        if (dashboardConfig.timer) {
+            container.innerHTML += `
+                <div class="content-box" style="text-align:center;">
+                    <h3><i data-lucide="timer" size="20"></i> Active Focus Session</h3>
+                    <div class="timer-display" style="font-size: 4rem; margin: 20px 0;">${document.getElementById('timer-display').textContent}</div>
+                    <button class="timer-btn start" style="padding: 10px 24px; font-size: 0.9rem;" onclick="navigate('timer')">Open Timer</button>
+                </div>
+            `;
+        }
+        if (dashboardConfig.calendar) {
+            container.innerHTML += `
+                <div class="content-box">
+                    <h3><i data-lucide="calendar-days" size="20"></i> Monthly View</h3>
+                    <div class="cal-grid" id="dashboard-calendar-grid" style="font-size:0.8rem; pointer-events:none;"></div>
+                </div>
+            `;
+            setTimeout(renderDashboardCalendar, 10);
+        }
+        if (dashboardConfig.stats) {
+            container.innerHTML += `
+                <div class="content-box" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div style="text-align:center;">
+                        <h4 style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:10px;">COMPLETED</h4>
+                        <div id="db-stat-perc" style="font-family:'Oswald'; font-size:2.5rem; color:var(--accent-green);">0%</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <h4 style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:10px;">STREAK</h4>
+                        <div id="db-stat-streak" style="font-family:'Oswald'; font-size:2.5rem; color:var(--accent-blue);">0</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        renderTasks();
+        lucide.createIcons();
+    }
+
+    function renderDashboardCalendar() {
+        const grid = document.getElementById('dashboard-calendar-grid');
+        if (!grid) return;
+        grid.innerHTML = "";
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const firstDay = new Date(year, month, 1);
+        let startDayIdx = firstDay.getDay() - 1; 
+        if (startDayIdx === -1) startDayIdx = 6; 
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        for (let i = 0; i < 35; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cal-cell';
+            const dayNum = i - startDayIdx + 1;
+            if (dayNum > 0 && dayNum <= daysInMonth) {
+                cell.innerHTML = `<div class="cal-day-num" style="font-size:0.8rem;">${dayNum}</div>`;
+                const dateStr = new Date(year, month, dayNum).toISOString().split('T')[0];
+                if (tasks.some(t => t.date === dateStr && !t.done)) {
+                    cell.style.background = "rgba(59, 130, 246, 0.1)";
+                }
+            } else {
+                cell.style.opacity = "0.1";
+            }
+            grid.appendChild(cell);
+        }
+    }
+
+
     function calculatePriority(dueDate) {
       const today = new Date();
       today.setHours(0,0,0,0);
       const due = new Date(dueDate);
       const diffTime = due - today;
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
       if (diffTime < 0) return "Overdue";
       if (diffDays <= 2) return "High";
       if (diffDays <= 5) return "Medium";
       return "Low";
     }
 
-    function handleSearch(val) {
-        searchTerm = val.toLowerCase();
-        renderTasks();
-    }
-
     function renderTasks() {
       const dbList = document.getElementById('dashboard-tasks');
       const allList = document.getElementById('all-tasks-list');
-      const prioFilter = document.getElementById('filter-prio').value;
+      const prioFilter = document.getElementById('filter-prio')?.value || 'all';
 
       tasks.forEach(t => t.prio = calculatePriority(t.date));
-
-      const filtered = tasks.filter(t => {
-          const matchesSearch = t.name.toLowerCase().includes(searchTerm);
-          const matchesPrio = prioFilter === 'all' || t.prio === prioFilter;
-          return matchesSearch && matchesPrio;
-      });
+      const filtered = tasks.filter(t => t.name.toLowerCase().includes(searchTerm) && (prioFilter === 'all' || t.prio === prioFilter));
 
       const buildItem = (t) => `
         <div class="task-item" style="opacity: ${t.done ? 0.5 : 1}">
-          <div class="task-icon" style="background: ${t.prio === 'Overdue' ? 'rgba(239, 68, 68, 0.1)' : t.prio === 'High' ? 'rgba(245, 158, 11, 0.1)' : t.prio === 'Medium' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)'}">
-            <i data-lucide="${t.done ? 'check-circle-2' : (t.prio === 'Overdue' ? 'alert-triangle' : 'circle')}" color="${t.prio === 'Overdue' ? '#ef4444' : t.prio === 'High' ? '#f59e0b' : t.prio === 'Medium' ? '#3b82f6' : '#10b981'}"></i>
+          <div class="task-icon" style="background: ${t.prio === 'Overdue' ? 'rgba(239, 68, 68, 0.1)' : t.prio === 'High' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59, 130, 246, 0.1)'}">
+            <i data-lucide="${t.done ? 'check-circle-2' : (t.prio === 'Overdue' ? 'alert-triangle' : 'circle')}" color="${t.prio === 'Overdue' ? '#ef4444' : '#3b82f6'}"></i>
           </div>
           <div class="task-info">
-            <div style="font-weight: 700; font-size: 1.05rem; text-decoration: ${t.done ? 'line-through' : 'none'}">${t.name}</div>
-            <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Due: ${new Date(t.date).toLocaleDateString()}</span>
+            <div style="font-weight: 700; font-size: 1rem; text-decoration: ${t.done ? 'line-through' : 'none'}">${t.name}</div>
           </div>
-          <div class="badge ${t.prio.toLowerCase()}">${t.prio}</div>
           <div class="task-actions">
-            <button class="action-btn" onclick="toggleTask(${t.id})" title="Toggle Complete"><i data-lucide="${t.done ? 'rotate-ccw' : 'check'}" size="16"></i></button>
-            <button class="action-btn" onclick="deleteTask(${t.id})" title="Delete"><i data-lucide="trash-2" size="16"></i></button>
+            <button class="action-btn" onclick="toggleTask(${t.id})"><i data-lucide="check"></i></button>
+            <button class="action-btn" onclick="deleteTask(${t.id})"><i data-lucide="trash-2"></i></button>
           </div>
         </div>
       `;
 
-      if (filtered.length === 0) {
-        const empty = `<div class="empty-state"><i data-lucide="inbox" size="48"></i><h3>Zero Stress.</h3><p>Your list is clear or no results found.</p></div>`;
-        if(dbList) dbList.innerHTML = empty;
-        if(allList) allList.innerHTML = empty;
-      } else {
-        if(dbList) dbList.innerHTML = filtered.slice(0, 5).map(buildItem).join('');
-        if(allList) allList.innerHTML = filtered.map(buildItem).join('');
-      }
+      if (dbList) dbList.innerHTML = filtered.length ? filtered.slice(0, 4).map(buildItem).join('') : "<p style='color:var(--text-secondary); font-size:0.9rem;'>No active tasks.</p>";
+      if (allList) allList.innerHTML = filtered.length ? filtered.map(buildItem).join('') : "<p>No tasks found.</p>";
       
       lucide.createIcons();
       updateStats();
@@ -491,161 +625,81 @@
     function updateStats() {
       const total = tasks.length;
       const done = tasks.filter(t => t.done).length;
-      const overdue = tasks.filter(t => t.prio === 'Overdue' && !t.done).length;
-      const high = tasks.filter(t => t.prio === 'High' && !t.done).length;
-
-      document.getElementById('stat-total').textContent = total;
-      document.getElementById('stat-done').textContent = done;
-      document.getElementById('stat-overdue').textContent = overdue;
-      document.getElementById('stat-high').textContent = high;
-
       const perc = total > 0 ? Math.round((done / total) * 100) : 0;
-      document.getElementById('stat-perc').textContent = `${perc}%`;
-      document.getElementById('stat-streak').textContent = done > 5 ? "7" : (done > 0 ? "1" : "0");
+      
+      if(document.getElementById('stat-total')) document.getElementById('stat-total').textContent = total;
+      if(document.getElementById('stat-done')) document.getElementById('stat-done').textContent = done;
+      if(document.getElementById('stat-overdue')) document.getElementById('stat-overdue').textContent = tasks.filter(t => t.prio === 'Overdue' && !t.done).length;
+      if(document.getElementById('stat-high')) document.getElementById('stat-high').textContent = tasks.filter(t => t.prio === 'High' && !t.done).length;
+      
+      if(document.getElementById('stat-perc')) document.getElementById('stat-perc').textContent = perc + "%";
+      if(document.getElementById('db-stat-perc')) document.getElementById('db-stat-perc').textContent = perc + "%";
+      if(document.getElementById('db-stat-streak')) document.getElementById('db-stat-streak').textContent = done > 0 ? "1" : "0";
     }
 
     function toggleTask(id) {
-      const task = tasks.find(t => t.id === id);
-      if (task) {
-        task.done = !task.done;
-        saveToStorage();
-        renderTasks();
-        if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
-      }
+      const t = tasks.find(x => x.id === id);
+      if (t) { t.done = !t.done; saveToStorage(); renderTasks(); renderCalendar(); }
     }
 
     function deleteTask(id) {
-      tasks = tasks.filter(t => t.id !== id);
-      saveToStorage();
-      renderTasks();
-      if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+      tasks = tasks.filter(x => x.id !== id);
+      saveToStorage(); renderTasks(); renderCalendar();
     }
 
     function openModal() { document.getElementById('modal-overlay').style.display = 'flex'; }
     function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-
     function addTask() {
       const name = document.getElementById('m-name').value;
       const date = document.getElementById('m-date').value;
       if (!name || !date) return;
       tasks.unshift({ id: Date.now(), name, date, done: false });
-      saveToStorage();
-      renderTasks();
-      closeModal();
-      document.getElementById('m-name').value = "";
-      document.getElementById('m-date').value = "";
-    }
-
-    function setTimer(minutes) {
-        clearInterval(timerInterval);
-        isTimerRunning = false;
-        timerSeconds = minutes * 60;
-        updateTimerDisplay();
-        document.getElementById('timer-toggle').textContent = "Start Session";
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.textContent.includes(minutes + 'm'));
-        });
-    }
-
-    function toggleTimer() {
-        if (isTimerRunning) {
-            clearInterval(timerInterval);
-            document.getElementById('timer-toggle').textContent = "Resume Session";
-        } else {
-            timerInterval = setInterval(() => {
-                if (timerSeconds > 0) {
-                    timerSeconds--;
-                    updateTimerDisplay();
-                } else {
-                    clearInterval(timerInterval);
-                    // Use a message instead of a native alert if possible
-                    document.getElementById('timer-display').textContent = "DONE!";
-                    resetTimer();
-                }
-            }, 1000);
-            document.getElementById('timer-toggle').textContent = "Pause Session";
-        }
-        isTimerRunning = !isTimerRunning;
-    }
-
-    function resetTimer() {
-        clearInterval(timerInterval);
-        isTimerRunning = false;
-        timerSeconds = 1500;
-        updateTimerDisplay();
-        document.getElementById('timer-toggle').textContent = "Start Session";
+      saveToStorage(); renderTasks(); closeModal();
     }
 
     function updateTimerDisplay() {
         const m = Math.floor(timerSeconds / 60);
         const s = timerSeconds % 60;
-        document.getElementById('timer-display').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        const str = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        document.getElementById('timer-display').textContent = str;
+        const widgetTimer = document.querySelector('#page-dashboard .timer-display');
+        if (widgetTimer) widgetTimer.textContent = str;
     }
-
-    function prevMonth() {
-        currentViewDate.setMonth(currentViewDate.getMonth() - 1);
-        renderCalendar();
+    function toggleTimer() {
+        if (isTimerRunning) { clearInterval(timerInterval); }
+        else { timerInterval = setInterval(() => { if (timerSeconds > 0) { timerSeconds--; updateTimerDisplay(); } }, 1000); }
+        isTimerRunning = !isTimerRunning;
+        document.getElementById('timer-toggle').textContent = isTimerRunning ? "Pause Session" : "Resume Session";
     }
+    function resetTimer() { clearInterval(timerInterval); isTimerRunning = false; timerSeconds = 1500; updateTimerDisplay(); document.getElementById('timer-toggle').textContent = "Start Session"; }
+    function setTimer(m) { resetTimer(); timerSeconds = m * 60; updateTimerDisplay(); }
 
-    function nextMonth() {
-        currentViewDate.setMonth(currentViewDate.getMonth() + 1);
-        renderCalendar();
-    }
-
+    function prevMonth() { currentViewDate.setMonth(currentViewDate.getMonth() - 1); renderCalendar(); }
+    function nextMonth() { currentViewDate.setMonth(currentViewDate.getMonth() + 1); renderCalendar(); }
     function renderCalendar() {
       const grid = document.getElementById('calendar-grid');
       const title = document.getElementById('cal-month-title');
       if(!grid) return;
       grid.innerHTML = "";
-      const year = currentViewDate.getFullYear();
-      const month = currentViewDate.getMonth();
       title.textContent = currentViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const year = currentViewDate.getFullYear(), month = currentViewDate.getMonth();
       const firstDay = new Date(year, month, 1);
-      let startDayIdx = firstDay.getDay() - 1; 
-      if (startDayIdx === -1) startDayIdx = 6; 
+      let startDayIdx = (firstDay.getDay() + 6) % 7; 
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const daysInPrevMonth = new Date(year, month, 0).getDate();
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const totalCells = 42;
-      for (let i = 0; i < totalCells; i++) {
+      for (let i = 0; i < 42; i++) {
           const cell = document.createElement('div');
-          let dayDisplay, cellDate;
-          let isOtherMonth = false;
-          if (i < startDayIdx) {
-              dayDisplay = daysInPrevMonth - (startDayIdx - i - 1);
-              cellDate = new Date(year, month - 1, dayDisplay);
-              isOtherMonth = true;
-          } else if (i < startDayIdx + daysInMonth) {
-              dayDisplay = i - startDayIdx + 1;
-              cellDate = new Date(year, month, dayDisplay);
-          } else {
-              dayDisplay = i - (startDayIdx + daysInMonth) + 1;
-              cellDate = new Date(year, month + 1, dayDisplay);
-              isOtherMonth = true;
-          }
-          cell.className = `cal-cell ${isOtherMonth ? 'other-month' : ''}`;
-          if (cellDate.getTime() === today.getTime()) cell.classList.add('today');
-          cell.innerHTML = `<div class="cal-day-num">${dayDisplay}</div>`;
-          const dateStr = cellDate.toISOString().split('T')[0];
-          const cellTasks = tasks.filter(t => t.date === dateStr && !t.done);
-          if (cellTasks.length > 0) {
-              const dots = document.createElement('div');
-              dots.className = 'cal-dots';
-              cellTasks.forEach(t => {
-                  const dot = document.createElement('div');
-                  dot.className = 'dot';
-                  const prio = calculatePriority(t.date);
-                  dot.style.background = prio === 'Overdue' ? '#ef4444' : prio === 'High' ? '#f59e0b' : prio === 'Medium' ? '#3b82f6' : '#10b981';
-                  dots.appendChild(dot);
-              });
-              cell.appendChild(dots);
-          }
+          cell.className = 'cal-cell';
+          const d = i - startDayIdx + 1;
+          if (d > 0 && d <= daysInMonth) {
+              cell.innerHTML = `<div class="cal-day-num">${d}</div>`;
+              const dateStr = new Date(year, month, d).toISOString().split('T')[0];
+              if (tasks.some(t => t.date === dateStr && !t.done)) {
+                  cell.innerHTML += `<div class="cal-dots"><div class="dot" style="background:var(--accent-blue)"></div></div>`;
+              }
+          } else { cell.style.opacity = "0.2"; }
           grid.appendChild(cell);
       }
     }
-
-    lucide.createIcons();
   </script>
 </body>
 </html>
