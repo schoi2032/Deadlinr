@@ -1,9 +1,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
-const welcome = document.getElementById("welcomeMessage");
-  const messages = ["Let's get ahead of the day. 🕗", "Time to finish some work. 💼", "Last push for the day. 🌟"];
-
-  const messageData = {
+const welcomeMessage = document.getElementById("welcomeMessage");
+  const messages = {
     morning: [
       "Good morning. Ready to start? 🌅",
       "Let's get ahead of the day. 🕗",
@@ -20,12 +18,20 @@ const welcome = document.getElementById("welcomeMessage");
       "Let's wrap things up. 🌌"
     ]
   };
+   let messages;
 
+      if (hour < 12) messages = morning;
+      else if (hour < 17) messages = afternoon;
+      else messages = evening;
+
+      const random = Math.floor(Math.random() * messages.length);
+
+      document.getElementById("welcomeMessage").textContent = messages[random];
   let currentIndex = 0;
 
 function updateWelcome() {
-    welcome.textContent = messages[Math.floor(Math.random() * messages.length)];
-    welcome.style.opacity = "1";
+    welcomeMessage.textContent = messages[Math.floor(Math.random() * messages.length)];
+    welcomeMessage.style.opacity = "1";
     const hour = new Date().getHours();
     let messages;
 
