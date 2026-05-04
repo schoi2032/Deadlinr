@@ -16,6 +16,7 @@
       --accent-blue: #3b82f6;
       --accent-green: #10b981;
       --accent-red: #ef4444;
+      --accent-orange: #f59e0b;
       --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
       --card-border: rgba(255, 255, 255, 0.08);
       --glass: rgba(15, 23, 42, 0.6);
@@ -127,7 +128,8 @@
     .action-btn:hover { color: white; background: rgba(255,255,255,0.15); }
 
     .badge { padding: 6px 14px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
-    .badge.high { background: rgba(239, 68, 68, 0.2); color: #ff5f5f; }
+    .badge.overdue { background: rgba(239, 68, 68, 0.3); color: #ff3e3e; border: 1px solid rgba(239,68,68,0.5); }
+    .badge.high { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
     .badge.medium { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
     .badge.low { background: rgba(16, 185, 129, 0.2); color: #34d399; }
 
@@ -143,13 +145,24 @@
     .cal-cell:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
     .cal-cell.today { border: 2px solid var(--accent-blue); background: rgba(59, 130, 246, 0.05); }
     .cal-cell.today .cal-day-num { color: var(--accent-blue); }
-    
-    /* Next/Prev Month Styles */
     .cal-cell.other-month { opacity: 0.3; filter: blur(0.5px); transform: scale(0.96); }
-    
     .cal-day-num { font-weight: 800; font-family: 'Oswald'; font-size: 1.2rem; }
     .cal-dots { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
     .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    /* --- TIMER --- */
+    .timer-display { font-family: 'Oswald'; font-size: 8rem; text-align: center; margin: 40px 0; color: white; letter-spacing: -4px; }
+    .timer-controls { display: flex; justify-content: center; gap: 20px; }
+    .timer-btn { 
+      padding: 18px 40px; border-radius: 20px; font-weight: 800; cursor: pointer; border: none; font-size: 1.1rem;
+      transition: 0.3s;
+    }
+    .timer-btn.start { background: white; color: black; }
+    .timer-btn.reset { background: rgba(255,255,255,0.1); color: white; }
+    .timer-presets { display: flex; justify-content: center; gap: 12px; margin-top: 30px; }
+    .preset-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: var(--text-secondary); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; transition: 0.2s; }
+    .preset-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+    .preset-btn.active { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(59,130,246,0.1); }
 
     /* --- MODAL --- */
     #modal-overlay {
@@ -195,6 +208,7 @@
       <nav id="sidebar-nav">
         <div class="nav-link active" onclick="navigate('dashboard')"><i data-lucide="layout-grid" size="20"></i> Dashboard</div>
         <div class="nav-link" onclick="navigate('tasks')"><i data-lucide="layers" size="20"></i> Focus List</div>
+        <div class="nav-link" onclick="navigate('timer')"><i data-lucide="timer" size="20"></i> Focus Timer</div>
         <div class="nav-link" onclick="navigate('calendar')"><i data-lucide="calendar-days" size="20"></i> Timeline</div>
         <div class="nav-link" onclick="navigate('stats')"><i data-lucide="trending-up" size="20"></i> Analytics</div>
         <div class="nav-link" onclick="navigate('settings')"><i data-lucide="sliders" size="20"></i> Settings</div>
@@ -225,9 +239,9 @@
       <div id="page-dashboard" class="page active">
         <div class="stat-grid">
           <div class="stat-card"><div><h4>Total</h4><span class="stat-val" id="stat-total">0</span></div><i data-lucide="hash" color="#3b82f6" size="28"></i></div>
-          <div class="stat-card"><div><h4>Due Soon</h4><span class="stat-val" id="stat-pending">0</span></div><i data-lucide="alarm-clock" color="#f59e0b" size="28"></i></div>
+          <div class="stat-card"><div><h4>Overdue</h4><span class="stat-val" id="stat-overdue" style="color:var(--accent-red)">0</span></div><i data-lucide="alert-circle" color="#ef4444" size="28"></i></div>
           <div class="stat-card"><div><h4>Crushed</h4><span class="stat-val" id="stat-done">0</span></div><i data-lucide="trophy" color="#10b981" size="28"></i></div>
-          <div class="stat-card"><div><h4>High Alert</h4><span class="stat-val" id="stat-high">0</span></div><i data-lucide="flame" color="#ef4444" size="28"></i></div>
+          <div class="stat-card"><div><h4>High Alert</h4><span class="stat-val" id="stat-high">0</span></div><i data-lucide="flame" color="#f59e0b" size="28"></i></div>
         </div>
         <div class="content-box">
           <h3><i data-lucide="sparkles" size="20"></i> Priority Focus</h3>
@@ -244,6 +258,7 @@
                 <span style="font-size: 0.8rem; color: var(--text-secondary); align-self: center;">Sort by</span>
                 <select id="filter-prio" onchange="renderTasks()" style="background: #0f172a; color: white; border: 1px solid var(--card-border); padding: 8px 16px; border-radius: 12px; font-weight: 600;">
                   <option value="all">Everything</option>
+                  <option value="Overdue">Overdue</option>
                   <option value="High">Urgent (High)</option>
                   <option value="Medium">Upcoming (Med)</option>
                   <option value="Low">Relax (Low)</option>
@@ -251,6 +266,27 @@
             </div>
           </div>
           <div id="all-tasks-list" class="task-list"></div>
+        </div>
+      </div>
+
+      <!-- PAGE: TIMER -->
+      <div id="page-timer" class="page">
+        <div class="content-box" style="text-align: center; padding: 60px;">
+          <h3><i data-lucide="timer" size="20"></i> Focus Timer</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 20px;">Lock in and clear your list.</p>
+          
+          <div class="timer-display" id="timer-display">25:00</div>
+          
+          <div class="timer-controls">
+            <button class="timer-btn reset" onclick="resetTimer()">Reset</button>
+            <button class="timer-btn start" id="timer-toggle" onclick="toggleTimer()">Start Session</button>
+          </div>
+          
+          <div class="timer-presets">
+            <button class="preset-btn active" onclick="setTimer(25)">25m (Focus)</button>
+            <button class="preset-btn" onclick="setTimer(5)">5m (Break)</button>
+            <button class="preset-btn" onclick="setTimer(15)">15m (Long Break)</button>
+          </div>
         </div>
       </div>
 
@@ -321,7 +357,7 @@
         <input type="text" id="m-name" class="form-input" placeholder="e.g. Physics Lab Report">
       </div>
       <div class="form-group">
-        <label>DUE DATE (Priority is auto-calculated!)</label>
+        <label>DUE DATE</label>
         <input type="date" id="m-date" class="form-input">
       </div>
       <div class="modal-btns">
@@ -335,7 +371,12 @@
     let tasks = [];
     let userName = "";
     let searchTerm = "";
-    let currentViewDate = new Date(); // Track currently viewed month in calendar
+    let currentViewDate = new Date();
+    
+    // Timer State
+    let timerSeconds = 1500;
+    let timerInterval = null;
+    let isTimerRunning = false;
 
     function initApp() {
       const input = document.getElementById('user-name-input');
@@ -378,6 +419,7 @@
       const diffTime = due - today;
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
+      if (diffTime < 0) return "Overdue";
       if (diffDays <= 2) return "High";
       if (diffDays <= 5) return "Medium";
       return "Low";
@@ -403,8 +445,8 @@
 
       const buildItem = (t) => `
         <div class="task-item" style="opacity: ${t.done ? 0.5 : 1}">
-          <div class="task-icon" style="background: ${t.prio === 'High' ? 'rgba(239, 68, 68, 0.1)' : t.prio === 'Medium' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)'}">
-            <i data-lucide="${t.done ? 'check-circle-2' : 'circle'}" color="${t.prio === 'High' ? '#ef4444' : t.prio === 'Medium' ? '#3b82f6' : '#10b981'}"></i>
+          <div class="task-icon" style="background: ${t.prio === 'Overdue' ? 'rgba(239, 68, 68, 0.1)' : t.prio === 'High' ? 'rgba(245, 158, 11, 0.1)' : t.prio === 'Medium' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)'}">
+            <i data-lucide="${t.done ? 'check-circle-2' : (t.prio === 'Overdue' ? 'alert-triangle' : 'circle')}" color="${t.prio === 'Overdue' ? '#ef4444' : t.prio === 'High' ? '#f59e0b' : t.prio === 'Medium' ? '#3b82f6' : '#10b981'}"></i>
           </div>
           <div class="task-info">
             <div style="font-weight: 700; font-size: 1.05rem; text-decoration: ${t.done ? 'line-through' : 'none'}">${t.name}</div>
@@ -434,12 +476,12 @@
     function updateStats() {
       const total = tasks.length;
       const done = tasks.filter(t => t.done).length;
-      const pending = tasks.filter(t => !t.done).length;
+      const overdue = tasks.filter(t => t.prio === 'Overdue' && !t.done).length;
       const high = tasks.filter(t => t.prio === 'High' && !t.done).length;
 
       document.getElementById('stat-total').textContent = total;
       document.getElementById('stat-done').textContent = done;
-      document.getElementById('stat-pending').textContent = pending;
+      document.getElementById('stat-overdue').textContent = overdue;
       document.getElementById('stat-high').textContent = high;
 
       const perc = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -466,16 +508,58 @@
     function addTask() {
       const name = document.getElementById('m-name').value;
       const date = document.getElementById('m-date').value;
-
       if (!name || !date) return;
-
-      const prio = calculatePriority(date);
-      tasks.unshift({ id: Date.now(), name, prio, date, done: false });
-      
+      tasks.unshift({ id: Date.now(), name, date, done: false });
       renderTasks();
       closeModal();
       document.getElementById('m-name').value = "";
       document.getElementById('m-date').value = "";
+    }
+
+    // --- TIMER LOGIC ---
+    function setTimer(minutes) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        timerSeconds = minutes * 60;
+        updateTimerDisplay();
+        document.getElementById('timer-toggle').textContent = "Start Session";
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.textContent.includes(minutes + 'm'));
+        });
+    }
+
+    function toggleTimer() {
+        if (isTimerRunning) {
+            clearInterval(timerInterval);
+            document.getElementById('timer-toggle').textContent = "Resume Session";
+        } else {
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    alert("Session complete! Take a break.");
+                    resetTimer();
+                }
+            }, 1000);
+            document.getElementById('timer-toggle').textContent = "Pause Session";
+        }
+        isTimerRunning = !isTimerRunning;
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        timerSeconds = 1500;
+        updateTimerDisplay();
+        document.getElementById('timer-toggle').textContent = "Start Session";
+    }
+
+    function updateTimerDisplay() {
+        const m = Math.floor(timerSeconds / 60);
+        const s = timerSeconds % 60;
+        document.getElementById('timer-display').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
 
     // --- CALENDAR LOGIC (Mon-Sun) ---
@@ -493,68 +577,50 @@
       const grid = document.getElementById('calendar-grid');
       const title = document.getElementById('cal-month-title');
       grid.innerHTML = "";
-      
       const year = currentViewDate.getFullYear();
       const month = currentViewDate.getMonth();
       title.textContent = currentViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-      // First day of current month
       const firstDay = new Date(year, month, 1);
-      // Monday is 1, Sunday is 0. Convert to Mon=0, Tue=1 ... Sun=6
       let startDayIdx = firstDay.getDay() - 1; 
-      if (startDayIdx === -1) startDayIdx = 6; // Sunday fix
-
+      if (startDayIdx === -1) startDayIdx = 6; 
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const daysInPrevMonth = new Date(year, month, 0).getDate();
-      
       const today = new Date();
       today.setHours(0,0,0,0);
-
-      // Create a 42-cell grid (6 weeks) to maintain consistent height
       const totalCells = 42;
-
       for (let i = 0; i < totalCells; i++) {
           const cell = document.createElement('div');
           let dayDisplay, cellDate;
           let isOtherMonth = false;
-
           if (i < startDayIdx) {
-              // Days from Previous Month
               dayDisplay = daysInPrevMonth - (startDayIdx - i - 1);
               cellDate = new Date(year, month - 1, dayDisplay);
               isOtherMonth = true;
           } else if (i < startDayIdx + daysInMonth) {
-              // Current Month
               dayDisplay = i - startDayIdx + 1;
               cellDate = new Date(year, month, dayDisplay);
           } else {
-              // Next Month
               dayDisplay = i - (startDayIdx + daysInMonth) + 1;
               cellDate = new Date(year, month + 1, dayDisplay);
               isOtherMonth = true;
           }
-
           cell.className = `cal-cell ${isOtherMonth ? 'other-month' : ''}`;
           if (cellDate.getTime() === today.getTime()) cell.classList.add('today');
-
           cell.innerHTML = `<div class="cal-day-num">${dayDisplay}</div>`;
-
-          // Filter tasks for this specific date
           const dateStr = cellDate.toISOString().split('T')[0];
           const cellTasks = tasks.filter(t => t.date === dateStr && !t.done);
-
           if (cellTasks.length > 0) {
               const dots = document.createElement('div');
               dots.className = 'cal-dots';
               cellTasks.forEach(t => {
                   const dot = document.createElement('div');
                   dot.className = 'dot';
-                  dot.style.background = t.prio === 'High' ? '#ef4444' : t.prio === 'Medium' ? '#3b82f6' : '#10b981';
+                  const prio = calculatePriority(t.date);
+                  dot.style.background = prio === 'Overdue' ? '#ef4444' : prio === 'High' ? '#f59e0b' : prio === 'Medium' ? '#3b82f6' : '#10b981';
                   dots.appendChild(dot);
               });
               cell.appendChild(dots);
           }
-          
           grid.appendChild(cell);
       }
     }
