@@ -31,7 +31,6 @@
       height: 100vh;
     }
 
-    /* --- ONBOARDING --- */
     #onboarding {
       position: fixed; inset: 0; background: var(--bg-deep); z-index: 2000;
       display: flex; align-items: center; justify-content: center;
@@ -51,7 +50,6 @@
       box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
     }
 
-    /* --- LAYOUT --- */
     #app-container { display: flex; height: 100vh; opacity: 0; transform: scale(0.98); transition: all 0.8s ease; }
     #app-container.visible { opacity: 1; transform: scale(1); }
 
@@ -82,7 +80,6 @@
     .nav-link:hover { color: white; background: rgba(255,255,255,0.04); transform: translateX(4px); }
     .nav-link.active { color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); font-weight: 700; border-right: 3px solid var(--accent-blue); }
 
-    /* --- MAIN --- */
     #main-wrapper { flex: 1; overflow-y: auto; padding: 40px; background: radial-gradient(circle at top right, #0f172a, #020617); }
     .page { display: none; animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
     .page.active { display: block; }
@@ -133,7 +130,6 @@
     .badge.medium { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
     .badge.low { background: rgba(16, 185, 129, 0.2); color: #34d399; }
 
-    /* --- CALENDAR --- */
     .cal-header-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-bottom: 12px; }
     .cal-header-day { text-align: center; font-size: 0.75rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
@@ -150,7 +146,6 @@
     .cal-dots { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
     .dot { width: 6px; height: 6px; border-radius: 50%; }
 
-    /* --- TIMER --- */
     .timer-display { font-family: 'Oswald'; font-size: 8rem; text-align: center; margin: 40px 0; color: white; letter-spacing: -4px; }
     .timer-controls { display: flex; justify-content: center; gap: 20px; }
     .timer-btn { 
@@ -164,7 +159,6 @@
     .preset-btn:hover { background: rgba(255,255,255,0.1); color: white; }
     .preset-btn.active { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(59,130,246,0.1); }
 
-    /* --- MODAL --- */
     #modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
       z-index: 3000; display: none; align-items: center; justify-content: center;
@@ -234,8 +228,6 @@
           <input type="text" placeholder="Search your future..." oninput="handleSearch(this.value)">
         </div>
       </header>
-
-      <!-- PAGE: DASHBOARD -->
       <div id="page-dashboard" class="page active">
         <div class="stat-grid">
           <div class="stat-card"><div><h4>Total</h4><span class="stat-val" id="stat-total">0</span></div><i data-lucide="hash" color="#3b82f6" size="28"></i></div>
@@ -249,7 +241,6 @@
         </div>
       </div>
 
-      <!-- PAGE: ALL TASKS -->
       <div id="page-tasks" class="page">
         <div class="content-box">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
@@ -269,7 +260,6 @@
         </div>
       </div>
 
-      <!-- PAGE: TIMER -->
       <div id="page-timer" class="page">
         <div class="content-box" style="text-align: center; padding: 60px;">
           <h3><i data-lucide="timer" size="20"></i> Focus Timer</h3>
@@ -290,7 +280,6 @@
         </div>
       </div>
 
-      <!-- PAGE: CALENDAR -->
       <div id="page-calendar" class="page">
         <div class="content-box">
           <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
@@ -313,7 +302,6 @@
         </div>
       </div>
 
-      <!-- PAGE: STATISTICS -->
       <div id="page-stats" class="page">
         <div class="content-box" style="text-align: center; padding: 60px;">
           <h3 style="justify-content: center;">Performance Analytics</h3>
@@ -330,7 +318,6 @@
         </div>
       </div>
 
-      <!-- PAGE: SETTINGS -->
       <div id="page-settings" class="page">
         <div class="content-box">
           <h3>Settings</h3>
@@ -348,7 +335,6 @@
     </main>
   </div>
 
-  <!-- TASK MODAL -->
   <div id="modal-overlay">
     <div class="modal">
       <h2 style="font-family: 'Oswald'; margin-bottom: 30px; font-size: 1.8rem;">New Assignment</h2>
@@ -373,7 +359,6 @@
     let searchTerm = "";
     let currentViewDate = new Date();
     
-    // Timer State
     let timerSeconds = 1500;
     let timerInterval = null;
     let isTimerRunning = false;
@@ -516,7 +501,6 @@
       document.getElementById('m-date').value = "";
     }
 
-    // --- TIMER LOGIC ---
     function setTimer(minutes) {
         clearInterval(timerInterval);
         isTimerRunning = false;
@@ -562,7 +546,6 @@
         document.getElementById('timer-display').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
 
-    // --- CALENDAR LOGIC (Mon-Sun) ---
     function prevMonth() {
         currentViewDate.setMonth(currentViewDate.getMonth() - 1);
         renderCalendar();
