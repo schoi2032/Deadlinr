@@ -228,6 +228,7 @@
           <input type="text" placeholder="Search your future..." oninput="handleSearch(this.value)">
         </div>
       </header>
+
       <div id="page-dashboard" class="page active">
         <div class="stat-grid">
           <div class="stat-card"><div><h4>Total</h4><span class="stat-val" id="stat-total">0</span></div><i data-lucide="hash" color="#3b82f6" size="28"></i></div>
@@ -327,7 +328,7 @@
                       <h4 style="margin-bottom: 4px;">Dangerous Territory</h4>
                       <p style="font-size: 0.85rem; color: var(--text-secondary);">Permanently wipe all your student data and tasks.</p>
                   </div>
-                  <button onclick="localStorage.clear(); location.reload();" style="padding: 12px 24px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; font-weight: 700; cursor: pointer;">Reset Workspace</button>
+                  <button onclick="clearStorage()" style="padding: 12px 24px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; font-weight: 700; cursor: pointer;">Reset Workspace</button>
               </div>
           </div>
         </div>
@@ -354,14 +355,39 @@
   </div>
 
   <script>
-    let tasks = [];
-    let userName = "";
+    let tasks = JSON.parse(localStorage.getItem('deadlinr_tasks')) || [];
+    let userName = localStorage.getItem('deadlinr_user') || "";
     let searchTerm = "";
     let currentViewDate = new Date();
     
     let timerSeconds = 1500;
     let timerInterval = null;
     let isTimerRunning = false;
+
+    // Run on startup
+    window.onload = function() {
+        if (userName) {
+            setupApp(userName);
+            // Instant show if user exists
+            document.getElementById('onboarding').style.display = 'none';
+            document.getElementById('app-container').classList.add('visible');
+            document.getElementById('app-container').style.opacity = '1';
+            document.getElementById('app-container').style.transform = 'scale(1)';
+        }
+        document.getElementById('date-subtitle').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        renderTasks();
+        renderCalendar();
+    };
+
+    function saveToStorage() {
+        localStorage.setItem('deadlinr_tasks', JSON.stringify(tasks));
+        localStorage.setItem('deadlinr_user', userName);
+    }
+
+    function clearStorage() {
+        localStorage.clear();
+        location.reload();
+    }
 
     function initApp() {
       const input = document.getElementById('user-name-input');
@@ -371,9 +397,8 @@
       }
       
       userName = input.value.trim();
-      document.getElementById('welcome-text').textContent = `What's up, ${userName}? 👋`;
-      document.getElementById('side-name').textContent = userName;
-      document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=3b82f6&color=fff&bold=true&rounded=true&size=128`;
+      saveToStorage();
+      setupApp(userName);
       
       document.getElementById('onboarding').style.opacity = '0';
       document.getElementById('onboarding').style.transform = 'translateY(-100%)';
@@ -381,10 +406,15 @@
       setTimeout(() => {
           document.getElementById('onboarding').style.display = 'none';
           document.getElementById('app-container').classList.add('visible');
-          document.getElementById('date-subtitle').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
           renderTasks();
           renderCalendar();
       }, 600);
+    }
+
+    function setupApp(name) {
+      document.getElementById('welcome-text').textContent = `What's up, ${name}? 👋`;
+      document.getElementById('side-name').textContent = name;
+      document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3b82f6&color=fff&bold=true&rounded=true&size=128`;
     }
 
     function navigate(pageId) {
@@ -447,11 +477,11 @@
 
       if (filtered.length === 0) {
         const empty = `<div class="empty-state"><i data-lucide="inbox" size="48"></i><h3>Zero Stress.</h3><p>Your list is clear or no results found.</p></div>`;
-        dbList.innerHTML = empty;
-        allList.innerHTML = empty;
+        if(dbList) dbList.innerHTML = empty;
+        if(allList) allList.innerHTML = empty;
       } else {
-        dbList.innerHTML = filtered.slice(0, 5).map(buildItem).join('');
-        allList.innerHTML = filtered.map(buildItem).join('');
+        if(dbList) dbList.innerHTML = filtered.slice(0, 5).map(buildItem).join('');
+        if(allList) allList.innerHTML = filtered.map(buildItem).join('');
       }
       
       lucide.createIcons();
@@ -471,18 +501,22 @@
 
       const perc = total > 0 ? Math.round((done / total) * 100) : 0;
       document.getElementById('stat-perc').textContent = `${perc}%`;
-      document.getElementById('stat-streak').textContent = tasks.length > 3 ? "7" : "0";
+      document.getElementById('stat-streak').textContent = done > 5 ? "7" : (done > 0 ? "1" : "0");
     }
 
     function toggleTask(id) {
       const task = tasks.find(t => t.id === id);
-      if (task) task.done = !task.done;
-      renderTasks();
-      if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+      if (task) {
+        task.done = !task.done;
+        saveToStorage();
+        renderTasks();
+        if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+      }
     }
 
     function deleteTask(id) {
       tasks = tasks.filter(t => t.id !== id);
+      saveToStorage();
       renderTasks();
       if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
     }
@@ -495,6 +529,7 @@
       const date = document.getElementById('m-date').value;
       if (!name || !date) return;
       tasks.unshift({ id: Date.now(), name, date, done: false });
+      saveToStorage();
       renderTasks();
       closeModal();
       document.getElementById('m-name').value = "";
@@ -523,7 +558,8 @@
                     updateTimerDisplay();
                 } else {
                     clearInterval(timerInterval);
-                    alert("Session complete! Take a break.");
+                    // Use a message instead of a native alert if possible
+                    document.getElementById('timer-display').textContent = "DONE!";
                     resetTimer();
                 }
             }, 1000);
@@ -559,6 +595,7 @@
     function renderCalendar() {
       const grid = document.getElementById('calendar-grid');
       const title = document.getElementById('cal-month-title');
+      if(!grid) return;
       grid.innerHTML = "";
       const year = currentViewDate.getFullYear();
       const month = currentViewDate.getMonth();
