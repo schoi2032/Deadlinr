@@ -3,839 +3,612 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deadlinr Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+  <title>Deadlinr | Pro Student Workspace</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
-      --bg-dark: #0b111d;
-      --sidebar-bg: #0f172a;
-      --card-bg: #1e293b;
-      --accent-green: #22c55e;
+      --bg-deep: #020617;
+      --sidebar-bg: #070d19;
+      --card-bg: #0f172a;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
       --accent-blue: #3b82f6;
-      --accent-purple: #a855f7;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --border-gradient: linear-gradient(135deg, #3b82f6, #22c55e);
-      --modal-overlay: rgba(0, 0, 0, 0.8);
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-orange: #f59e0b;
+      --brand-gradient: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --glass: rgba(15, 23, 42, 0.6);
     }
 
-    body.light-theme {
-      --bg-dark: #f1f5f9;
-      --sidebar-bg: #ffffff;
-      --card-bg: #ffffff;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-      --modal-overlay: rgba(0, 0, 0, 0.4);
-    }
-
-    * { box-sizing: border-box; }
-    body { 
-      margin: 0; padding: 0; 
-      font-family: 'Inter', sans-serif; 
-      background-color: var(--bg-dark); 
-      color: var(--text-main);
-      display: flex;
-      min-height: 100vh;
-      transition: background-color 0.3s;
-    }
-
-    #sidebar { 
-      width: 240px; height: 100vh; position: fixed; left: 0; top: 0; 
-      background-color: var(--sidebar-bg); 
-      border-right: 2px solid;
-      border-image: var(--border-gradient) 1;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      z-index: 10;
-    }
-
-    #logo-container { display: flex; align-items: center; margin-bottom: 40px; gap: 10px; }
-    #logo-img { width: 35px; height: 35px; object-fit: contain; }
-    #logo-text { font-family: 'Oswald', sans-serif; font-size: 1.5rem; letter-spacing: 1px; }
-
-    .nav-item {
-      padding: 12px 15px;
-      margin: 4px 0;
-      border-radius: 8px;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .nav-item:hover, .nav-item.active {
-      background: rgba(59, 130, 246, 0.1);
-      color: var(--text-main);
-    }
-    .nav-item.active { 
-      border-left: 3px solid;
-      border-image: var(--border-gradient) 0 0 0 1;
-      border-radius: 0 8px 8px 0; 
-      font-weight: 600; 
-    }
-
-    .main-page { margin-left: 240px; flex: 1; padding: 30px; width: calc(100% - 240px); }
-
-    header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
-    #welcome-container h1 { font-size: 1.8rem; margin: 0; }
-    #welcome-container p { color: var(--text-muted); margin: 5px 0 0 0; }
-
-    .view-section { display: none; animation: fadeIn 0.3s ease; }
-    .view-section.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-    .stat-card {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 15px;
-      position: relative;
-    }
-    .stat-card::before, .content-section::before, .mini-task-card::before, .calendar-day::before, .modal-content::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      border-radius: inherit;
-      padding: 1.5px; 
-      background: var(--border-gradient);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: destination-out;
-      mask-composite: exclude;
-      pointer-events: none;
-    }
-
-    .stat-card h3 { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 10px 0; }
-    .stat-val { font-size: 2rem; font-weight: 700; margin: 0; }
-
-    .content-section {
-      background: var(--card-bg);
-      border-radius: 15px;
-      padding: 25px;
-      margin-bottom: 20px;
-      position: relative;
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      gap: 15px;
-    }
-
-    .controls { display: flex; gap: 10px; align-items: center; }
-
-    .controls button {
-      background: var(--accent-blue);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .controls .btn-secondary {
-      background: transparent;
-      border: 1px solid;
-      border-image: var(--border-gradient) 1;
-      color: var(--text-main);
-    }
-    .controls .btn-tab {
-      background: rgba(255,255,255,0.05);
-      color: var(--text-muted);
-      padding: 6px 12px;
-      font-size: 0.8rem;
-    }
-    .controls .btn-tab.active {
-      background: var(--accent-blue);
-      color: white;
-    }
-
-    .deadlinr-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .deadlinr-table th { 
-      color: var(--text-muted); 
-      font-size: 0.85rem; 
-      padding-bottom: 15px; 
-      border-bottom: 1px solid transparent;
-      border-image: var(--border-gradient) 1;
-    }
-    .deadlinr-table td { padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-    .assignment-input, .class-select, .status-select, .due-date-input, .priority-badge, .modal-input {
-      background: rgba(0,0,0,0.1);
-      border: 1px solid transparent;
-      border-image: var(--border-gradient) 1;
-      color: inherit;
-      padding: 8px 12px;
-      border-radius: 6px;
-      width: 95%;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .priority-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        text-align: center;
-        width: auto;
-        border: 1px solid transparent;
-    }
-    .prio-high { background: #fee2e2; color: #ef4444; border-color: #fecaca; }
-    .prio-med { background: #fef3c7; color: #d97706; border-color: #fde68a; }
-    .prio-low { background: #d1fae5; color: #059669; border-color: #a7f3d0; }
-    .prio-overdue { background: #450a0a; color: #f87171; border-color: #991b1b; }
-    .calendar-grid {
-      display: grid;
-      gap: 12px;
-      margin-top: 20px;
-    }
-    .calendar-grid.grid-week, .calendar-grid.grid-month {
-      grid-template-columns: repeat(7, 1fr);
-    }
-    .calendar-grid.grid-day {
-      grid-template-columns: 1fr;
-    }
-
-    .calendar-day-header {
-      text-align: center;
-      font-weight: 600;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      padding-bottom: 10px;
-    }
-    .calendar-day {
-      background: rgba(255,255,255,0.03);
-      min-height: 120px;
-      border-radius: 12px;
-      padding: 10px;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      transition: background 0.2s;
-    }
-    .calendar-grid.grid-month .calendar-day {
-        min-height: 80px;
-    }
-    .calendar-grid.grid-day .calendar-day {
-        min-height: 250px;
-        background: rgba(255,255,255,0.05);
-    }
-    .calendar-day.today {
-      background: rgba(59, 130, 246, 0.1);
-    }
-    .calendar-day.other-month {
-        opacity: 0.3;
-    }
-    .day-number {
-      font-size: 0.9rem;
-      font-weight: 700;
-      margin-bottom: 5px;
-    }
-    .calendar-task-item {
-      font-size: 0.7rem;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: var(--accent-blue);
-      color: white;
-      white-space: nowrap;
+    * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-deep);
+      color: var(--text-primary);
       overflow: hidden;
-      text-overflow: ellipsis;
-      border-left: 3px solid var(--accent-green);
-    }
-    .calendar-task-item.done {
-      background: var(--accent-green);
-      opacity: 0.7;
-      text-decoration: line-through;
+      height: 100vh;
     }
 
-    .tasks-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-    .task-col { background: rgba(0,0,0,0.05); border-radius: 12px; padding: 15px; min-height: 400px; }
-    .task-col h4 { 
-      margin-top: 0; 
-      color: var(--text-muted); 
-      border-bottom: 2px solid; 
-      border-image: var(--border-gradient) 1;
-      padding-bottom: 10px; 
+    #onboarding {
+      position: fixed; inset: 0; background: var(--bg-deep); z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .mini-task-card { 
-      background: var(--card-bg); 
-      padding: 12px; 
-      border-radius: 8px; 
-      margin-bottom: 10px; 
-      position: relative;
+    .onboard-card { text-align: center; width: 100%; max-width: 420px; padding: 40px; }
+    .onboard-logo { font-family: 'Oswald', sans-serif; font-size: 3.5rem; margin-bottom: 20px; color: #fff; display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .onboard-input {
+      width: 100%; background: var(--card-bg); border: 2px solid var(--card-border);
+      padding: 18px; border-radius: 16px; color: white; font-size: 1.1rem; margin-bottom: 20px;
+      transition: border-color 0.3s;
     }
-    .mini-task-card .tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: var(--accent-blue); color: white; margin-bottom: 5px; display: inline-block; }
+    .onboard-input:focus { border-color: var(--accent-blue); }
+    .onboard-btn {
+      width: 100%; background: var(--brand-gradient); border: none; padding: 18px;
+      border-radius: 16px; color: white; font-weight: 800; cursor: pointer; font-size: 1rem;
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+    }
 
-    .theme-toggle-card { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
-    .toggle-btn { 
-      padding: 10px 20px; 
-      border-radius: 8px; 
-      border: 1px solid transparent; 
-      border-image: var(--border-gradient) 1;
-      cursor: pointer; 
-      background: var(--card-bg); 
-      color: var(--text-main); 
-    }
-    .toggle-btn.active { background: var(--accent-blue); color: white; border-image: none; border-color: var(--accent-blue); }
+    #app-container { display: flex; height: 100vh; opacity: 0; transform: scale(0.98); transition: all 0.8s ease; }
+    #app-container.visible { opacity: 1; transform: scale(1); }
 
-    .delete-row-btn { background: none; border: 1px solid #ef4444; color: #ef4444; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-    .delete-row-btn:hover { background: #ef4444; color: white; }
-    
-    .danger-btn { background: #ef4444 !important; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-    #task-modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: var(--modal-overlay);
-      z-index: 100;
-      justify-content: center;
-      align-items: center;
-      backdrop-filter: blur(5px);
+    #sidebar {
+      width: 280px; background: var(--sidebar-bg); display: flex; flex-direction: column;
+      padding: 32px 24px; border-right: 1px solid var(--card-border);
     }
-    .modal-content {
-      background: var(--card-bg);
-      width: 90%;
-      max-width: 450px;
-      padding: 30px;
-      border-radius: 20px;
-      position: relative;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-      animation: modalSlide 0.3s ease-out;
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+    .brand-logo { 
+      width: 36px; height: 36px; background: var(--brand-gradient); border-radius: 10px; 
+      display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
-    @keyframes modalSlide { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .modal-content h2 { margin-top: 0; font-family: 'Oswald', sans-serif; letter-spacing: 1px; }
-    .modal-form-group { margin-bottom: 15px; }
-    .modal-form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
-    .modal-input { width: 100%; box-sizing: border-box; font-size: 1rem; }
-    .modal-actions { display: flex; gap: 15px; margin-top: 25px; }
-    .modal-actions button { flex: 1; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; transition: transform 0.2s; }
-    .modal-actions button:hover { transform: translateY(-2px); }
-    
-    .btn-create-task { 
-      background: var(--border-gradient);
-      color: white;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    .brand-name { font-family: 'Oswald', sans-serif; font-size: 1.8rem; letter-spacing: -0.5px; }
+
+    .btn-new-task {
+      background: var(--brand-gradient); color: white; border: none; padding: 14px;
+      border-radius: 14px; font-weight: 700; margin-bottom: 32px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    
-    .btn-cancel-task {
-      background: transparent !important;
-      color: var(--text-main);
-      position: relative;
-      border: 1px solid transparent; 
+    .btn-new-task:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(59, 130, 246, 0.3); }
+
+    .nav-link {
+      display: flex; align-items: center; gap: 14px; padding: 14px;
+      color: var(--text-secondary); text-decoration: none; border-radius: 12px;
+      margin-bottom: 6px; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;
     }
-    .btn-cancel-task::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      border-radius: inherit;
-      padding: 1.5px;
-      background: var(--border-gradient);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: destination-out;
-      mask-composite: exclude;
+    .nav-link:hover { color: white; background: rgba(255,255,255,0.04); transform: translateX(4px); }
+    .nav-link.active { color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); font-weight: 700; border-right: 3px solid var(--accent-blue); }
+
+    #main-wrapper { flex: 1; overflow-y: auto; padding: 40px; background: radial-gradient(circle at top right, #0f172a, #020617); }
+    .page { display: none; animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .page.active { display: block; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .search-container {
+      background: var(--glass); backdrop-filter: blur(10px); padding: 12px 20px; border-radius: 16px;
+      display: flex; align-items: center; gap: 12px; width: 340px; border: 1px solid var(--card-border);
     }
+    .search-container input { background: none; border: none; color: white; flex: 1; font-size: 0.9rem; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 40px; }
+    .stat-card {
+      background: var(--glass); backdrop-filter: blur(10px); padding: 24px; border-radius: 24px; 
+      border: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;
+      transition: border-color 0.3s;
+    }
+    .stat-card:hover { border-color: rgba(255,255,255,0.2); }
+    .stat-card h4 { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+    .stat-val { font-size: 2.2rem; font-weight: 800; display: block; margin-top: 8px; font-family: 'Oswald'; }
+
+    .content-box { 
+      background: var(--glass); backdrop-filter: blur(10px); border-radius: 28px; 
+      border: 1px solid var(--card-border); padding: 32px; margin-bottom: 24px; 
+    }
+    .content-box h3 { font-family: 'Oswald'; font-size: 1.4rem; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+
+    .task-item {
+      display: flex; align-items: center; gap: 20px; padding: 20px;
+      background: rgba(255,255,255,0.02); border-radius: 18px; margin-bottom: 12px;
+      border: 1px solid transparent; transition: 0.3s;
+    }
+    .task-item:hover { transform: scale(1.01); background: rgba(255,255,255,0.04); border-color: var(--card-border); }
+    .task-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .task-info { flex: 1; }
+    .task-actions { display: flex; gap: 12px; opacity: 0; transition: 0.2s; }
+    .task-item:hover .task-actions { opacity: 1; }
+    .action-btn { 
+      background: rgba(255,255,255,0.05); border: none; color: var(--text-secondary); 
+      cursor: pointer; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    }
+    .action-btn:hover { color: white; background: rgba(255,255,255,0.15); }
+
+    .badge { padding: 6px 14px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+    .badge.overdue { background: rgba(239, 68, 68, 0.3); color: #ff3e3e; border: 1px solid rgba(239,68,68,0.5); }
+    .badge.high { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .badge.medium { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .badge.low { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+
+    .cal-header-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-bottom: 12px; }
+    .cal-header-day { text-align: center; font-size: 0.75rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+    .cal-cell { 
+      aspect-ratio: 1/1; background: rgba(255,255,255,0.03); border-radius: 16px; 
+      padding: 12px; border: 1px solid var(--card-border); transition: 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .cal-cell:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
+    .cal-cell.today { border: 2px solid var(--accent-blue); background: rgba(59, 130, 246, 0.05); }
+    .cal-cell.today .cal-day-num { color: var(--accent-blue); }
+    .cal-cell.other-month { opacity: 0.3; filter: blur(0.5px); transform: scale(0.96); }
+    .cal-day-num { font-weight: 800; font-family: 'Oswald'; font-size: 1.2rem; }
+    .cal-dots { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    .timer-display { font-family: 'Oswald'; font-size: 8rem; text-align: center; margin: 40px 0; color: white; letter-spacing: -4px; }
+    .timer-controls { display: flex; justify-content: center; gap: 20px; }
+    .timer-btn { 
+      padding: 18px 40px; border-radius: 20px; font-weight: 800; cursor: pointer; border: none; font-size: 1.1rem;
+      transition: 0.3s;
+    }
+    .timer-btn.start { background: white; color: black; }
+    .timer-btn.reset { background: rgba(255,255,255,0.1); color: white; }
+    .timer-presets { display: flex; justify-content: center; gap: 12px; margin-top: 30px; }
+    .preset-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: var(--text-secondary); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; transition: 0.2s; }
+    .preset-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+    .preset-btn.active { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(59,130,246,0.1); }
+
+    #modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+      z-index: 3000; display: none; align-items: center; justify-content: center;
+    }
+    .modal { 
+      width: 100%; max-width: 500px; background: #1e293b; border-radius: 32px; 
+      padding: 40px; border: 1px solid var(--card-border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; }
+    .form-input { 
+      width: 100%; background: #0f172a; border: 2px solid var(--card-border); 
+      padding: 14px 18px; border-radius: 14px; color: white; font-size: 1rem; margin-bottom: 24px;
+    }
+    .modal-btns { display: flex; gap: 16px; margin-top: 10px; }
+
+    .empty-state { text-align: center; padding: 60px; }
+    .empty-state i { margin-bottom: 16px; opacity: 0.2; }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 10px; }
   </style>
 </head>
-<body class="dark-theme">
-  <div id="task-modal">
-    <div class="modal-content">
-      <h2>Add New Task</h2>
-      <div class="modal-form-group">
-        <label>Assignment Name</label>
-        <input type="text" id="m-task-name" class="modal-input" placeholder="e.g. History Essay">
+<body>
+
+  <div id="onboarding">
+    <div class="onboard-card">
+      <div class="onboard-logo"><i data-lucide="zap" style="color:#3b82f6"></i> Deadlinr</div>
+      <p style="color: var(--text-secondary); margin-bottom: 30px; font-weight: 500;">Clear your mind. Own your schedule.</p>
+      <input type="text" id="user-name-input" class="onboard-input" placeholder="What's your name?" autocomplete="off">
+      <button class="onboard-btn" onclick="initApp()">Enter Workspace</button>
+    </div>
+  </div>
+
+  <div id="app-container">
+    <aside id="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><i data-lucide="check" size="22" color="white"></i></div>
+        <div class="brand-name">Deadlinr</div>
       </div>
-      <div class="modal-form-group">
-        <label>Class</label>
-        <select id="m-task-class" class="modal-input"></select>
+      <button class="btn-new-task" onclick="openModal()"><i data-lucide="plus-circle" size="20"></i> New Task</button>
+      <nav id="sidebar-nav">
+        <div class="nav-link active" onclick="navigate('dashboard')"><i data-lucide="layout-grid" size="20"></i> Dashboard</div>
+        <div class="nav-link" onclick="navigate('tasks')"><i data-lucide="layers" size="20"></i> Focus List</div>
+        <div class="nav-link" onclick="navigate('timer')"><i data-lucide="timer" size="20"></i> Focus Timer</div>
+        <div class="nav-link" onclick="navigate('calendar')"><i data-lucide="calendar-days" size="20"></i> Timeline</div>
+        <div class="nav-link" onclick="navigate('stats')"><i data-lucide="trending-up" size="20"></i> Analytics</div>
+        <div class="nav-link" onclick="navigate('settings')"><i data-lucide="sliders" size="20"></i> Settings</div>
+      </nav>
+      
+      <div style="margin-top: auto; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid var(--card-border); display: flex; align-items: center; gap: 12px;">
+        <img src="" id="user-avatar" style="width: 44px; height: 44px; border-radius: 12px; object-fit: cover;">
+        <div style="overflow: hidden;">
+          <div id="side-name" style="font-weight: 800; font-size: 0.9rem; white-space: nowrap; text-overflow: ellipsis;">User</div>
+          <span style="color: var(--accent-green); font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">Pro Member</span>
+        </div>
       </div>
-      <div class="modal-form-group">
-        <label>Status</label>
-        <select id="m-task-status" class="modal-input">
-          <option value="todo">To Do</option>
-          <option value="in-progress">In Progress</option>
-          <option value="done">Completed</option>
-        </select>
+    </aside>
+
+    <main id="main-wrapper">
+      <header>
+        <div>
+          <h2 id="welcome-text" style="font-family: 'Oswald'; font-size: 2rem;">Hey!</h2>
+          <p id="date-subtitle" style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;"></p>
+        </div>
+        <div class="search-container">
+          <i data-lucide="search" size="18" color="#94a3b8"></i>
+          <input type="text" placeholder="Search your future..." oninput="handleSearch(this.value)">
+        </div>
+      </header>
+      <div id="page-dashboard" class="page active">
+        <div class="stat-grid">
+          <div class="stat-card"><div><h4>Total</h4><span class="stat-val" id="stat-total">0</span></div><i data-lucide="hash" color="#3b82f6" size="28"></i></div>
+          <div class="stat-card"><div><h4>Overdue</h4><span class="stat-val" id="stat-overdue" style="color:var(--accent-red)">0</span></div><i data-lucide="alert-circle" color="#ef4444" size="28"></i></div>
+          <div class="stat-card"><div><h4>Crushed</h4><span class="stat-val" id="stat-done">0</span></div><i data-lucide="trophy" color="#10b981" size="28"></i></div>
+          <div class="stat-card"><div><h4>High Alert</h4><span class="stat-val" id="stat-high">0</span></div><i data-lucide="flame" color="#f59e0b" size="28"></i></div>
+        </div>
+        <div class="content-box">
+          <h3><i data-lucide="sparkles" size="20"></i> Priority Focus</h3>
+          <div id="dashboard-tasks" class="task-list"></div>
+        </div>
       </div>
-      <div class="modal-form-group">
-        <label>Due Date</label>
-        <input type="date" id="m-task-date" class="modal-input">
+
+      <div id="page-tasks" class="page">
+        <div class="content-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h3><i data-lucide="list-checks" size="20"></i> Your Master List</h3>
+            <div style="display: flex; gap: 10px;">
+                <span style="font-size: 0.8rem; color: var(--text-secondary); align-self: center;">Sort by</span>
+                <select id="filter-prio" onchange="renderTasks()" style="background: #0f172a; color: white; border: 1px solid var(--card-border); padding: 8px 16px; border-radius: 12px; font-weight: 600;">
+                  <option value="all">Everything</option>
+                  <option value="Overdue">Overdue</option>
+                  <option value="High">Urgent (High)</option>
+                  <option value="Medium">Upcoming (Med)</option>
+                  <option value="Low">Relax (Low)</option>
+                </select>
+            </div>
+          </div>
+          <div id="all-tasks-list" class="task-list"></div>
+        </div>
       </div>
-      <div class="modal-actions">
-        <button class="btn-cancel-task" onclick="closeTaskModal()">Cancel</button>
-        <button class="btn-create-task" id="save-task-btn" onclick="submitTaskModal()">Create Task</button>
+
+      <div id="page-timer" class="page">
+        <div class="content-box" style="text-align: center; padding: 60px;">
+          <h3><i data-lucide="timer" size="20"></i> Focus Timer</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 20px;">Lock in and clear your list.</p>
+          
+          <div class="timer-display" id="timer-display">25:00</div>
+          
+          <div class="timer-controls">
+            <button class="timer-btn reset" onclick="resetTimer()">Reset</button>
+            <button class="timer-btn start" id="timer-toggle" onclick="toggleTimer()">Start Session</button>
+          </div>
+          
+          <div class="timer-presets">
+            <button class="preset-btn active" onclick="setTimer(25)">25m (Focus)</button>
+            <button class="preset-btn" onclick="setTimer(5)">5m (Break)</button>
+            <button class="preset-btn" onclick="setTimer(15)">15m (Long Break)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-calendar" class="page">
+        <div class="content-box">
+          <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+              <h3 id="cal-month-title">May 2026</h3>
+              <div style="display:flex; gap: 10px;">
+                  <button class="action-btn" onclick="prevMonth()"><i data-lucide="chevron-left"></i></button>
+                  <button class="action-btn" onclick="nextMonth()"><i data-lucide="chevron-right"></i></button>
+              </div>
+          </div>
+          <div class="cal-header-row">
+            <div class="cal-header-day">Mon</div>
+            <div class="cal-header-day">Tue</div>
+            <div class="cal-header-day">Wed</div>
+            <div class="cal-header-day">Thu</div>
+            <div class="cal-header-day">Fri</div>
+            <div class="cal-header-day">Sat</div>
+            <div class="cal-header-day">Sun</div>
+          </div>
+          <div class="cal-grid" id="calendar-grid"></div>
+        </div>
+      </div>
+
+      <div id="page-stats" class="page">
+        <div class="content-box" style="text-align: center; padding: 60px;">
+          <h3 style="justify-content: center;">Performance Analytics</h3>
+          <div style="margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+             <div style="background: rgba(16, 185, 129, 0.05); padding: 40px; border-radius: 32px; border: 1px solid rgba(16, 185, 129, 0.1);">
+                <div style="font-size: 4rem; font-weight: 800; color: var(--accent-green); font-family: 'Oswald';" id="stat-perc">0%</div>
+                <p style="font-weight: 700; color: var(--text-secondary); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Tasks Completed</p>
+             </div>
+             <div style="background: rgba(59, 130, 246, 0.05); padding: 40px; border-radius: 32px; border: 1px solid rgba(59, 130, 246, 0.1);">
+                <div style="font-size: 4rem; font-weight: 800; color: var(--accent-blue); font-family: 'Oswald';" id="stat-streak">0</div>
+                <p style="font-weight: 700; color: var(--text-secondary); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Productive Days</p>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-settings" class="page">
+        <div class="content-box">
+          <h3>Settings</h3>
+          <div style="margin-top: 30px; border-top: 1px solid var(--card-border); padding-top: 30px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                  <div>
+                      <h4 style="margin-bottom: 4px;">Dangerous Territory</h4>
+                      <p style="font-size: 0.85rem; color: var(--text-secondary);">Permanently wipe all your student data and tasks.</p>
+                  </div>
+                  <button onclick="localStorage.clear(); location.reload();" style="padding: 12px 24px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; font-weight: 700; cursor: pointer;">Reset Workspace</button>
+              </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="modal-overlay">
+    <div class="modal">
+      <h2 style="font-family: 'Oswald'; margin-bottom: 30px; font-size: 1.8rem;">New Assignment</h2>
+      <div class="form-group">
+        <label>WHAT'S THE TASK?</label>
+        <input type="text" id="m-name" class="form-input" placeholder="e.g. Physics Lab Report">
+      </div>
+      <div class="form-group">
+        <label>DUE DATE</label>
+        <input type="date" id="m-date" class="form-input">
+      </div>
+      <div class="modal-btns">
+        <button class="btn-sec" style="flex: 1; padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.05); color: white; border: none; font-weight: 700; cursor: pointer;" onclick="closeModal()">Cancel</button>
+        <button class="btn-prime" style="flex: 2; padding: 16px; border-radius: 16px; background: white; color: black; border: none; font-weight: 800; cursor: pointer;" onclick="addTask()">Save to Schedule</button>
       </div>
     </div>
   </div>
 
-  <nav id="sidebar">
-    <div id="logo-container">
-      <img src="logo.png" id="logo-img" alt="Logo">
-      <div id="logo-text">Deadlinr</div>
-    </div>
-    <div class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">Dashboard</div>
-    <div class="nav-item" id="nav-tasks" onclick="switchView('tasks')">Tasks</div>
-    <div class="nav-item" id="nav-calendar" onclick="switchView('calendar')">Calendar</div>
-    <div class="nav-item" id="nav-projects" onclick="switchView('projects')">Projects</div>
-    <div class="nav-item" id="nav-settings" onclick="switchView('settings')">Settings</div>
-  </nav>
-  
-  <main class="main-page">
-    <header>
-      <div id="welcome-container">
-        <h1 id="welcomeMessage">Good morning!</h1>
-        <p id="view-subtitle">Overview of your academic progress.</p>
-      </div>
-    </header>
-
-    <div id="view-dashboard" class="view-section active">
-      <section class="stats-grid">
-        <div class="stat-card"><h3>Total Tasks</h3><p class="stat-val" id="stat-total">0</p></div>
-        <div class="stat-card"><h3>Completed</h3><p class="stat-val" id="stat-done">0</p></div>
-        <div class="stat-card"><h3>In Progress</h3><p class="stat-val" id="stat-progress">0</p></div>
-        <div class="stat-card"><h3>Overdue</h3><p class="stat-val" id="stat-overdue">0</p></div>
-      </section>
-      <section class="content-section">
-        <div class="section-header">
-          <h2>Active Deadlines</h2>
-          <div class="controls">
-            <button class="btn-secondary" onclick="addClassFromPrompt()">New Class</button>
-            <button onclick="openTaskModal()">Add Task +</button>
-          </div>
-        </div>
-        <table class="deadlinr-table" id="main-table">
-          <thead>
-            <tr><th>Assignment</th><th>Class</th><th>Status</th><th>Due Date</th><th>Action</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
-    </div>
-
-    <div id="view-tasks" class="view-section">
-      <div class="tasks-board">
-        <div class="task-col" id="col-todo"><h4>To Do</h4><div class="task-list"></div></div>
-        <div class="task-col" id="col-progress"><h4>In Progress</h4><div class="task-list"></div></div>
-        <div class="task-col" id="col-done"><h4>Completed</h4><div class="task-list"></div></div>
-        <div class="task-col" id="col-overdue"><h4>Overdue</h4><div class="task-list"></div></div>
-      </div>
-    </div>
-
-    <div id="view-calendar" class="view-section">
-      <section class="content-section">
-        <div class="section-header">
-          <div style="display: flex; flex-direction: column; gap: 5px;">
-            <h2 id="calendar-view-label">Calendar</h2>
-            <div class="controls">
-                <button class="btn-tab active" id="tab-day" onclick="setCalendarView('day')">Daily</button>
-                <button class="btn-tab" id="tab-week" onclick="setCalendarView('week')">Weekly</button>
-                <button class="btn-tab" id="tab-month" onclick="setCalendarView('month')">Monthly</button>
-            </div>
-          </div>
-          <div class="controls">
-            <button class="btn-secondary" onclick="navigateCalendar(-1)">← Prev</button>
-            <button class="btn-secondary" onclick="navigateCalendar(1)">Next →</button>
-            <button onclick="goToToday()">Today</button>
-          </div>
-        </div>
-        <div class="calendar-grid grid-day" id="calendar-grid">
-        </div>
-      </section>
-    </div>
-
-    <div id="view-projects" class="view-section">
-      <section class="content-section">
-        <div class="section-header">
-          <h2>Project Priority Dashboard</h2>
-          <div class="controls">
-            <p style="font-size: 0.8rem; color: var(--text-muted);">Automatically sorted by urgency</p>
-            <button onclick="addClassFromPrompt()">New Class</button>
-          </div>
-        </div>
-        <table class="deadlinr-table" id="projects-table">
-          <thead>
-            <tr><th>Priority</th><th>Assignment</th><th>Class</th><th>Due Date</th></tr>
-          </thead>
-          <tbody id="projects-body"></tbody>
-        </table>
-      </section>
-    </div>
-
-    <div id="view-settings" class="view-section">
-      <section class="content-section">
-        <h2>Appearance</h2>
-        <div class="theme-toggle-card">
-          <p>Choose your workspace theme:</p>
-          <div class="controls">
-            <button class="toggle-btn active" id="dark-btn" onclick="setTheme('dark')">Dark Dashboard</button>
-            <button class="toggle-btn" id="light-btn" onclick="setTheme('light')">Light Clean</button>
-          </div>
-        </div>
-        <hr style="border: 0; border-top: 1px solid; border-image: var(--border-gradient) 1; margin: 30px 0;">
-        <h2>Manage Data</h2>
-        <div class="theme-toggle-card">
-          <p>Class List Management:</p>
-          <div class="controls">
-            <button class="btn-secondary" onclick="addClassFromPrompt()">Add New Class</button>
-            <button class="danger-btn" onclick="deleteClassFromPrompt()">Delete A Class</button>
-          </div>
-        </div>
-      </section>
-    </div>
-  </main>
-
   <script>
-    const STORAGE_KEY = "deadlinr_master_data";
-    const CLASS_KEY = "deadlinr_classes";
+    let tasks = [];
+    let userName = "";
+    let searchTerm = "";
+    let currentViewDate = new Date();
     
-    let masterData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    let classes = JSON.parse(localStorage.getItem(CLASS_KEY)) || ["General"];
-    
-    let calendarCurrentDate = new Date();
-    let currentCalendarView = 'day'; 
+    let timerSeconds = 1500;
+    let timerInterval = null;
+    let isTimerRunning = false;
 
-    function switchView(viewId) {
-      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.getElementById(`view-${viewId}`).classList.add('active');
-      document.getElementById(`nav-${viewId}`).classList.add('active');
-      renderAll();
+    function initApp() {
+      const input = document.getElementById('user-name-input');
+      if (!input.value.trim()) {
+        input.style.borderColor = "#ef4444";
+        return;
+      }
+      
+      userName = input.value.trim();
+      document.getElementById('welcome-text').textContent = `What's up, ${userName}? 👋`;
+      document.getElementById('side-name').textContent = userName;
+      document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=3b82f6&color=fff&bold=true&rounded=true&size=128`;
+      
+      document.getElementById('onboarding').style.opacity = '0';
+      document.getElementById('onboarding').style.transform = 'translateY(-100%)';
+      
+      setTimeout(() => {
+          document.getElementById('onboarding').style.display = 'none';
+          document.getElementById('app-container').classList.add('visible');
+          document.getElementById('date-subtitle').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+          renderTasks();
+          renderCalendar();
+      }, 600);
     }
 
-    function save() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(masterData));
-      localStorage.setItem(CLASS_KEY, JSON.stringify(classes));
+    function navigate(pageId) {
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.toggle('active', link.getAttribute('onclick').includes(pageId));
+      });
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.toggle('active', page.id === `page-${pageId}`);
+      });
+      if (pageId === 'calendar') renderCalendar();
+    }
+
+    function calculatePriority(dueDate) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const due = new Date(dueDate);
+      const diffTime = due - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffTime < 0) return "Overdue";
+      if (diffDays <= 2) return "High";
+      if (diffDays <= 5) return "Medium";
+      return "Low";
+    }
+
+    function handleSearch(val) {
+        searchTerm = val.toLowerCase();
+        renderTasks();
+    }
+
+    function renderTasks() {
+      const dbList = document.getElementById('dashboard-tasks');
+      const allList = document.getElementById('all-tasks-list');
+      const prioFilter = document.getElementById('filter-prio').value;
+
+      tasks.forEach(t => t.prio = calculatePriority(t.date));
+
+      const filtered = tasks.filter(t => {
+          const matchesSearch = t.name.toLowerCase().includes(searchTerm);
+          const matchesPrio = prioFilter === 'all' || t.prio === prioFilter;
+          return matchesSearch && matchesPrio;
+      });
+
+      const buildItem = (t) => `
+        <div class="task-item" style="opacity: ${t.done ? 0.5 : 1}">
+          <div class="task-icon" style="background: ${t.prio === 'Overdue' ? 'rgba(239, 68, 68, 0.1)' : t.prio === 'High' ? 'rgba(245, 158, 11, 0.1)' : t.prio === 'Medium' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)'}">
+            <i data-lucide="${t.done ? 'check-circle-2' : (t.prio === 'Overdue' ? 'alert-triangle' : 'circle')}" color="${t.prio === 'Overdue' ? '#ef4444' : t.prio === 'High' ? '#f59e0b' : t.prio === 'Medium' ? '#3b82f6' : '#10b981'}"></i>
+          </div>
+          <div class="task-info">
+            <div style="font-weight: 700; font-size: 1.05rem; text-decoration: ${t.done ? 'line-through' : 'none'}">${t.name}</div>
+            <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Due: ${new Date(t.date).toLocaleDateString()}</span>
+          </div>
+          <div class="badge ${t.prio.toLowerCase()}">${t.prio}</div>
+          <div class="task-actions">
+            <button class="action-btn" onclick="toggleTask(${t.id})" title="Toggle Complete"><i data-lucide="${t.done ? 'rotate-ccw' : 'check'}" size="16"></i></button>
+            <button class="action-btn" onclick="deleteTask(${t.id})" title="Delete"><i data-lucide="trash-2" size="16"></i></button>
+          </div>
+        </div>
+      `;
+
+      if (filtered.length === 0) {
+        const empty = `<div class="empty-state"><i data-lucide="inbox" size="48"></i><h3>Zero Stress.</h3><p>Your list is clear or no results found.</p></div>`;
+        dbList.innerHTML = empty;
+        allList.innerHTML = empty;
+      } else {
+        dbList.innerHTML = filtered.slice(0, 5).map(buildItem).join('');
+        allList.innerHTML = filtered.map(buildItem).join('');
+      }
+      
+      lucide.createIcons();
       updateStats();
-    }
-    function openTaskModal() {
-        const classSelect = document.getElementById('m-task-class');
-        classSelect.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join('');
-        
-        document.getElementById('m-task-name').value = '';
-        document.getElementById('m-task-status').value = 'todo';
-        document.getElementById('m-task-date').value = getLocalDateString(new Date());
-        
-        document.getElementById('task-modal').style.display = 'flex';
-    }
-
-    function closeTaskModal() {
-        document.getElementById('task-modal').style.display = 'none';
-    }
-
-    function submitTaskModal() {
-        const name = document.getElementById('m-task-name').value;
-        const className = document.getElementById('m-task-class').value;
-        const status = document.getElementById('m-task-status').value;
-        const date = document.getElementById('m-task-date').value;
-
-        if (!name.trim()) {
-            return;
-        }
-
-        masterData.push({ 
-            name: name.trim(), 
-            class: className, 
-            status: status, 
-            date: date, 
-            priority: "med" 
-        });
-
-        save();
-        renderAll();
-        closeTaskModal();
-    }
-
-    function addClassFromPrompt() {
-      const name = prompt("Enter New Class Name:");
-      if (name && name.trim()) {
-        const cleanName = name.trim();
-        if (!classes.includes(cleanName)) {
-          classes.push(cleanName);
-          save();
-          renderAll(); 
-        }
-      }
-    }
-
-    function deleteClassFromPrompt() {
-      const name = prompt("Type the name of the class to DELETE exactly:");
-      if (name) {
-        const cleanName = name.trim();
-        const index = classes.indexOf(cleanName);
-        if (index > -1) {
-          classes.splice(index, 1);
-          if (classes.length === 0) classes.push("General");
-          masterData.forEach(t => {
-            if (t.class === cleanName) t.class = classes[0];
-          });
-          save();
-          renderAll();
-        }
-      }
-    }
-
-    function updateTask(index, key, val) {
-      if (masterData[index]) {
-        masterData[index][key] = val;
-        save();
-        if (key === 'date' || key === 'status') {
-            renderAll();
-        } else {
-            renderTasksBoard();
-            updateStats();
-        }
-      }
-    }
-
-    function deleteTask(index) {
-      masterData.splice(index, 1);
-      save();
-      renderAll();
-    }
-
-    function calculatePriority(dueDate, status) {
-        if (!dueDate) return { label: 'Low', class: 'prio-low', score: 0 };
-        const todayStr = getLocalDateString(new Date());
-        
-        if (status !== 'done' && dueDate < todayStr) {
-            return { label: 'Overdue', class: 'prio-overdue', score: 4 };
-        }
-
-        const todayObj = new Date();
-        const dueObj = new Date(dueDate + 'T00:00:00');
-        const diffDays = Math.ceil((dueObj - todayObj) / (1000 * 60 * 60 * 24));
-
-        if (diffDays <= 3) return { label: 'High', class: 'prio-high', score: 3 };
-        if (diffDays <= 7) return { label: 'Med', class: 'prio-med', score: 2 };
-        return { label: 'Low', class: 'prio-low', score: 1 };
-    }
-
-    function getLocalDateString(date) {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
     }
 
     function updateStats() {
-      const todayStr = getLocalDateString(new Date());
-      const done = masterData.filter(t => t.status === 'done').length;
-      const progress = masterData.filter(t => t.status === 'in-progress').length;
-      const overdue = masterData.filter(t => t.status !== 'done' && t.date && t.date < todayStr).length;
-      
-      document.getElementById('stat-total').textContent = masterData.length;
+      const total = tasks.length;
+      const done = tasks.filter(t => t.done).length;
+      const overdue = tasks.filter(t => t.prio === 'Overdue' && !t.done).length;
+      const high = tasks.filter(t => t.prio === 'High' && !t.done).length;
+
+      document.getElementById('stat-total').textContent = total;
       document.getElementById('stat-done').textContent = done;
-      document.getElementById('stat-progress').textContent = progress;
       document.getElementById('stat-overdue').textContent = overdue;
+      document.getElementById('stat-high').textContent = high;
+
+      const perc = total > 0 ? Math.round((done / total) * 100) : 0;
+      document.getElementById('stat-perc').textContent = `${perc}%`;
+      document.getElementById('stat-streak').textContent = tasks.length > 3 ? "7" : "0";
     }
 
-    function renderAll() {
-      renderMainTable();
-      renderTasksBoard();
-      renderCalendar();
-      renderProjects();
-      updateStats();
+    function toggleTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (task) task.done = !task.done;
+      renderTasks();
+      if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
     }
 
-    function renderMainTable() {
-      const tbody = document.querySelector("#main-table tbody");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-      masterData.forEach((task, index) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><input class="assignment-input" value="${task.name}" oninput="updateTask(${index}, 'name', this.value)"></td>
-          <td><select class="class-select" onchange="updateTask(${index}, 'class', this.value)">
-            ${classes.map(c => `<option value="${c}" ${task.class === c ? 'selected' : ''}>${c}</option>`).join('')}
-          </select></td>
-          <td><select class="status-select" onchange="updateTask(${index}, 'status', this.value)">
-            <option value="todo" ${task.status === 'todo' ? 'selected' : ''}>To Do</option>
-            <option value="in-progress" ${task.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
-            <option value="done" ${task.status === 'done' ? 'selected' : ''}>Done</option>
-          </select></td>
-          <td><input type="date" class="due-date-input" value="${task.date}" onchange="updateTask(${index}, 'date', this.value)"></td>
-          <td><button class="delete-row-btn" onclick="deleteTask(${index})">Delete</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      renderTasks();
+      if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
     }
 
-    function renderTasksBoard() {
-      const todayStr = getLocalDateString(new Date());
-      const lists = {
-        todo: document.querySelector("#col-todo .task-list"),
-        progress: document.querySelector("#col-progress .task-list"),
-        done: document.querySelector("#col-done .task-list"),
-        overdue: document.querySelector("#col-overdue .task-list")
-      };
-      if (!lists.todo) return;
-      Object.values(lists).forEach(l => l.innerHTML = "");
+    function openModal() { document.getElementById('modal-overlay').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-      masterData.forEach(t => {
-        let key = t.status === 'in-progress' ? 'progress' : t.status;
-        if (t.status !== 'done' && t.date && t.date < todayStr) key = 'overdue';
-        
-        const card = document.createElement("div");
-        card.className = "mini-task-card";
-        card.innerHTML = `<span class="tag">${t.class}</span><div><strong>${t.name || '...'}</strong></div><small>${t.date || 'No date'}</small>`;
-        if (lists[key]) lists[key].appendChild(card);
-      });
+    function addTask() {
+      const name = document.getElementById('m-name').value;
+      const date = document.getElementById('m-date').value;
+      if (!name || !date) return;
+      tasks.unshift({ id: Date.now(), name, date, done: false });
+      renderTasks();
+      closeModal();
+      document.getElementById('m-name').value = "";
+      document.getElementById('m-date').value = "";
     }
 
-    function setCalendarView(view) {
-      currentCalendarView = view;
-      document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
-      document.getElementById(`tab-${view}`).classList.add('active');
-      renderCalendar();
+    function setTimer(minutes) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        timerSeconds = minutes * 60;
+        updateTimerDisplay();
+        document.getElementById('timer-toggle').textContent = "Start Session";
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.textContent.includes(minutes + 'm'));
+        });
     }
 
-    function navigateCalendar(direction) {
-      if (currentCalendarView === 'day') {
-        calendarCurrentDate.setDate(calendarCurrentDate.getDate() + direction);
-      } else if (currentCalendarView === 'week') {
-        calendarCurrentDate.setDate(calendarCurrentDate.getDate() + (direction * 7));
-      } else if (currentCalendarView === 'month') {
-        calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + direction);
-      }
-      renderCalendar();
+    function toggleTimer() {
+        if (isTimerRunning) {
+            clearInterval(timerInterval);
+            document.getElementById('timer-toggle').textContent = "Resume Session";
+        } else {
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    alert("Session complete! Take a break.");
+                    resetTimer();
+                }
+            }, 1000);
+            document.getElementById('timer-toggle').textContent = "Pause Session";
+        }
+        isTimerRunning = !isTimerRunning;
     }
 
-    function goToToday() {
-      calendarCurrentDate = new Date();
-      renderCalendar();
+    function resetTimer() {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        timerSeconds = 1500;
+        updateTimerDisplay();
+        document.getElementById('timer-toggle').textContent = "Start Session";
+    }
+
+    function updateTimerDisplay() {
+        const m = Math.floor(timerSeconds / 60);
+        const s = timerSeconds % 60;
+        document.getElementById('timer-display').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function prevMonth() {
+        currentViewDate.setMonth(currentViewDate.getMonth() - 1);
+        renderCalendar();
+    }
+
+    function nextMonth() {
+        currentViewDate.setMonth(currentViewDate.getMonth() + 1);
+        renderCalendar();
     }
 
     function renderCalendar() {
-      const grid = document.getElementById("calendar-grid");
-      if (!grid) return;
-      
+      const grid = document.getElementById('calendar-grid');
+      const title = document.getElementById('cal-month-title');
       grid.innerHTML = "";
-      grid.className = `calendar-grid grid-${currentCalendarView}`;
-      const label = document.getElementById('calendar-view-label');
-      const todayStr = getLocalDateString(new Date());
-
-      if (currentCalendarView === 'day') {
-        label.textContent = calendarCurrentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-        createDayCard(new Date(calendarCurrentDate), grid, todayStr);
-      } 
-      else if (currentCalendarView === 'week') {
-        const startOfWeek = new Date(calendarCurrentDate);
-        startOfWeek.setDate(calendarCurrentDate.getDate() - calendarCurrentDate.getDay());
-        
-        label.textContent = `Week of ${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-
-        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(h => {
-            const head = document.createElement('div');
-            head.className = 'calendar-day-header';
-            head.textContent = h;
-            grid.appendChild(head);
-        });
-
-        for (let i = 0; i < 7; i++) {
-          const d = new Date(startOfWeek);
-          d.setDate(startOfWeek.getDate() + i);
-          createDayCard(d, grid, todayStr);
-        }
-      } 
-      else if (currentCalendarView === 'month') {
-        label.textContent = calendarCurrentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        
-        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(h => {
-            const head = document.createElement('div');
-            head.className = 'calendar-day-header';
-            head.textContent = h;
-            grid.appendChild(head);
-        });
-
-        const firstDayOfMonth = new Date(calendarCurrentDate.getFullYear(), calendarCurrentDate.getMonth(), 1);
-        const startDay = new Date(firstDayOfMonth);
-        startDay.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
-
-        for (let i = 0; i < 42; i++) {
-          const d = new Date(startDay);
-          d.setDate(startDay.getDate() + i);
-          const isOtherMonth = d.getMonth() !== calendarCurrentDate.getMonth();
-          createDayCard(d, grid, todayStr, isOtherMonth);
-        }
+      const year = currentViewDate.getFullYear();
+      const month = currentViewDate.getMonth();
+      title.textContent = currentViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const firstDay = new Date(year, month, 1);
+      let startDayIdx = firstDay.getDay() - 1; 
+      if (startDayIdx === -1) startDayIdx = 6; 
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const totalCells = 42;
+      for (let i = 0; i < totalCells; i++) {
+          const cell = document.createElement('div');
+          let dayDisplay, cellDate;
+          let isOtherMonth = false;
+          if (i < startDayIdx) {
+              dayDisplay = daysInPrevMonth - (startDayIdx - i - 1);
+              cellDate = new Date(year, month - 1, dayDisplay);
+              isOtherMonth = true;
+          } else if (i < startDayIdx + daysInMonth) {
+              dayDisplay = i - startDayIdx + 1;
+              cellDate = new Date(year, month, dayDisplay);
+          } else {
+              dayDisplay = i - (startDayIdx + daysInMonth) + 1;
+              cellDate = new Date(year, month + 1, dayDisplay);
+              isOtherMonth = true;
+          }
+          cell.className = `cal-cell ${isOtherMonth ? 'other-month' : ''}`;
+          if (cellDate.getTime() === today.getTime()) cell.classList.add('today');
+          cell.innerHTML = `<div class="cal-day-num">${dayDisplay}</div>`;
+          const dateStr = cellDate.toISOString().split('T')[0];
+          const cellTasks = tasks.filter(t => t.date === dateStr && !t.done);
+          if (cellTasks.length > 0) {
+              const dots = document.createElement('div');
+              dots.className = 'cal-dots';
+              cellTasks.forEach(t => {
+                  const dot = document.createElement('div');
+                  dot.className = 'dot';
+                  const prio = calculatePriority(t.date);
+                  dot.style.background = prio === 'Overdue' ? '#ef4444' : prio === 'High' ? '#f59e0b' : prio === 'Medium' ? '#3b82f6' : '#10b981';
+                  dots.appendChild(dot);
+              });
+              cell.appendChild(dots);
+          }
+          grid.appendChild(cell);
       }
     }
 
-    function createDayCard(date, container, todayStr, isOtherMonth = false) {
-      const dateStr = getLocalDateString(date);
-      const dayDiv = document.createElement("div");
-      dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''} ${isOtherMonth ? 'other-month' : ''}`;
-      
-      const dayLabel = currentCalendarView === 'day' ? date.toLocaleDateString('en-US', {weekday: 'short'}) + ' ' : '';
-      dayDiv.innerHTML = `<div class="day-number">${dayLabel}${date.getDate()}</div>`;
-      
-      const dayTasks = masterData.filter(t => t.date === dateStr);
-      dayTasks.forEach(t => {
-        const taskDiv = document.createElement("div");
-        taskDiv.className = `calendar-task-item ${t.status === 'done' ? 'done' : ''}`;
-        taskDiv.textContent = t.name || "(No Name)";
-        taskDiv.title = `${t.class}: ${t.name}`;
-        dayDiv.appendChild(taskDiv);
-      });
-      
-      container.appendChild(dayDiv);
-    }
-
-    function renderProjects() {
-      const body = document.getElementById("projects-body");
-      if (!body) return;
-      body.innerHTML = "";
-
-      const sorted = [...masterData]
-        .map(t => ({ ...t, prio: calculatePriority(t.date, t.status) }))
-        .sort((a, b) => {
-            if (b.prio.score !== a.prio.score) return b.prio.score - a.prio.score;
-            return (a.date || '9999').localeCompare(b.date || '9999');
-        });
-
-      sorted.forEach((t) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><span class="priority-badge ${t.prio.class}">${t.prio.label}</span></td>
-          <td><strong>${t.name || 'Untitled'}</strong></td>
-          <td>${t.class}</td>
-          <td>${t.date || 'No Date'}</td>
-        `;
-        body.appendChild(tr);
-      });
-    }
-
-    function setTheme(theme) {
-      if (theme === 'light') { 
-        document.body.classList.add('light-theme'); 
-        document.getElementById('light-btn').classList.add('active'); 
-        document.getElementById('dark-btn').classList.remove('active'); 
-      } else { 
-        document.body.classList.remove('light-theme'); 
-        document.getElementById('dark-btn').classList.add('active'); 
-        document.getElementById('light-btn').classList.remove('active'); 
-      }
-    }
-
-    window.onload = () => { 
-      renderAll(); 
-      const hour = new Date().getHours();
-      const msg = hour < 12 ? "Good morning!" : hour < 17 ? "Good afternoon!" : "Good evening!";
-      document.getElementById('welcomeMessage').textContent = msg;
-    };
+    lucide.createIcons();
   </script>
 </body>
 </html>
