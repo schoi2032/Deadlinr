@@ -13,7 +13,6 @@ function initApp() {
     input.style.borderColor = "#ef4444";
     return;
   }
-
   userName = input.value.trim();
   document.getElementById('welcome-text').textContent = `What's up, ${userName}? 👋`;
   document.getElementById('side-name').textContent = userName;
