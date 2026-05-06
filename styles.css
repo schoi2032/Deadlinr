@@ -234,21 +234,22 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .badge.high { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); }
 .badge.medium { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.4); }
 .badge.low { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
-
 .dashboard-split {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 320px;
   gap: 24px;
-  align-items: flex-start;
+  align-items: start;
 }
 
 .dashboard-panel {
-  flex: 1;
   min-width: 0;
 }
 
 .calendar-panel {
-  flex: 0 0 420px;
+  min-width: 0;
+  width: 100%;
 }
+
 
 .calendar-panel-head {
   display: flex;
@@ -268,12 +269,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 
 @media (max-width: 1200px) {
   .dashboard-split {
-    flex-direction: column;
-  }
-
-  .calendar-panel {
-    flex: 1;
-    width: 100%;
+    grid-template-columns: 1fr;
   }
 }
 
@@ -330,6 +326,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
   text-transform: uppercase; 
   letter-spacing: 1px; 
 }
+
 .week-grid { 
   display: grid; 
   grid-template-columns: repeat(7, 1fr); 
@@ -429,7 +426,34 @@ header { display: flex; justify-content: space-between; align-items: center; mar
   background: rgba(59,130,246,0.15);
   box-shadow: 0 0 0 1px rgba(59,130,246,0.3);
 }
+.mini-timer-card {
+  min-height: 220px;
+}
 
+.mini-timer-card .timer-display {
+  font-size: 3rem;
+  margin: 16px 0;
+  letter-spacing: -2px;
+}
+
+.mini-timer-card .timer-btn {
+  padding: 12px 18px;
+  font-size: 0.95rem;
+}
+
+.mini-timer-card .timer-controls {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mini-timer-card .timer-presets {
+  margin-top: 18px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cal-cell {
+  cursor: pointer;
+}
 
 #modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px);
@@ -470,8 +494,35 @@ header { display: flex; justify-content: space-between; align-items: center; mar
   transform: translateY(-2px);
 }
 .modal-btns { display: flex; gap: 16px; margin-top: 10px; }
+.dashboard-stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+.calendar-switcher {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.calendar-panel .cal-grid,
+.calendar-panel .week-grid {
+  min-height: 420px;
+}
+.switch-btn {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-weight: 700;
+}
 
-
+.switch-btn.active {
+  background: rgba(59,130,246,0.15);
+  color: var(--accent-blue);
+  border-color: rgba(59,130,246,0.35);
+}
 .empty-state { text-align: center; padding: 80px; }
 .empty-state i { margin-bottom: 20px; opacity: 0.3; font-size: 4rem; }
 
