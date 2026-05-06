@@ -77,26 +77,59 @@
       <div id="dashboard-tasks" class="task-list"></div>
     </div>
 
-    <div class="content-box dashboard-panel calendar-panel">
-      <div class="calendar-panel-head">
-        <h3><i data-lucide="calendar-days" size="20"></i> This Week</h3>
+    <div class="content-box dashboard-panel mini-timer-card">
+      <h3><i data-lucide="timer" size="20"></i> Quick Timer</h3>
+      <div id="timer-display" class="timer-display">25:00</div>
+      <div class="timer-controls">
+        <button class="timer-btn reset" onclick="resetTimer()">Reset</button>
+        <button class="timer-btn start" id="timer-toggle" onclick="toggleTimer()">Start Session</button>
+      </div>
+      <div class="timer-presets">
+        <button class="preset-btn active" onclick="setTimer(25)">25m</button>
+        <button class="preset-btn" onclick="setTimer(5)">5m</button>
+        <button class="preset-btn" onclick="setTimer(15)">15m</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-box dashboard-panel calendar-panel" style="margin-top: 24px;">
+    <div class="calendar-panel-head">
+      <h3><i data-lucide="calendar-days" size="20"></i> Calendar</h3>
+      <div style="display:flex; gap: 10px; align-items: center;">
+        <div class="calendar-switcher">
+          <button class="switch-btn active" onclick="setCalendarView('week')">Weekly</button>
+          <button class="switch-btn" onclick="setCalendarView('month')">Monthly</button>
+        </div>
         <div class="calendar-nav">
           <button class="action-btn" onclick="prevWeek()"><i data-lucide="chevron-left"></i></button>
           <button class="action-btn" onclick="nextWeek()"><i data-lucide="chevron-right"></i></button>
         </div>
       </div>
-      <h3 id="week-title" style="margin-bottom: 18px; font-size: 1.1rem;"></h3>
-      <div class="week-header-row">
-        <div class="week-header-day">Mon</div>
-        <div class="week-header-day">Tue</div>
-        <div class="week-header-day">Wed</div>
-        <div class="week-header-day">Thu</div>
-        <div class="week-header-day">Fri</div>
-        <div class="week-header-day">Sat</div>
-        <div class="week-header-day">Sun</div>
-      </div>
-      <div class="week-grid" id="week-grid"></div>
     </div>
+
+    <h3 id="week-title" style="margin-bottom: 18px; font-size: 1.1rem;"></h3>
+    <div class="week-header-row">
+      <div class="week-header-day">Mon</div>
+      <div class="week-header-day">Tue</div>
+      <div class="week-header-day">Wed</div>
+      <div class="week-header-day">Thu</div>
+      <div class="week-header-day">Fri</div>
+      <div class="week-header-day">Sat</div>
+      <div class="week-header-day">Sun</div>
+    </div>
+    <div class="week-grid" id="week-grid"></div>
+
+    <h3 id="cal-month-title" style="margin-bottom: 18px; font-size: 1.1rem; display:none;"></h3>
+    <div class="cal-header-row" id="month-header" style="display:none;">
+      <div class="cal-header-day">M</div>
+      <div class="cal-header-day">T</div>
+      <div class="cal-header-day">W</div>
+      <div class="cal-header-day">T</div>
+      <div class="cal-header-day">F</div>
+      <div class="cal-header-day">S</div>
+      <div class="cal-header-day">S</div>
+    </div>
+    <div class="cal-grid" id="calendar-grid" style="display:none;"></div>
   </div>
 </div>
 
