@@ -1,6 +1,7 @@
 let tasks = [];
 let userName = "";
 let searchTerm = "";
+let calendarView = 'week';
 let currentWeekStart = new Date();
 currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay() + 1); 
 
@@ -46,7 +47,7 @@ function initApp() {
     
     document.getElementById('date-subtitle').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     renderTasks();
-    renderWeekCalendar();
+    setCalendarView(calendarView);
     renderTimelineWeekCalendar();
     lucide.createIcons();
   }, 600);
@@ -98,11 +99,12 @@ function calculatePriority(dueDate) {
   return "Low";
 }
 function renderDashboardCalendar() {
-  if (document.getElementById('page-dashboard').classList.contains('active')) {
-    renderWeekCalendar();
+  if (calendarView === 'week') {
+    renderWeekCalendar('week-grid', 'week-title');
+  } else {
+    renderMonthCalendar('calendar-grid', 'cal-month-title');
   }
 }
-
 function handleSearch(val) {
   searchTerm = val.toLowerCase();
   renderTasks();
@@ -186,16 +188,13 @@ function toggleTask(id) {
   renderTasks();
   renderDashboardCalendar();
   renderTimelineWeekCalendar();
-  if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
 }
-
 
 function deleteTask(id) {
   tasks = tasks.filter(t => t.id !== id);
   renderTasks();
   renderDashboardCalendar();
   renderTimelineWeekCalendar();
-  if (document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
 }
 
 
@@ -262,26 +261,52 @@ function resetTimer() {
 function updateTimerDisplay() {
   const m = Math.floor(timerSeconds / 60);
   const s = timerSeconds % 60;
-  document.getElementById('timer-display').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  const text = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  const big = document.getElementById('timer-display');
+  const mini = document.getElementById('mini-timer-display');
+  if (big) big.textContent = text;
+  if (mini) mini.textContent = text;
 }
 
 function prevWeek() {
   currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-  renderWeekCalendar();
+  renderDashboardCalendar();
+  renderTimelineWeekCalendar();
 }
 
 function nextWeek() {
   currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-  renderWeekCalendar();
+  renderDashboardCalendar();
+  renderTimelineWeekCalendar();
 }
+function setCalendarView(view) {
+  calendarView = view;
 
-function renderWeekCalendar() {
-  const grid = document.getElementById('week-grid');
-  const title = document.getElementById('week-title');
+  document.querySelectorAll('.switch-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toLowerCase().includes(view));
+  });
+
+  const weekTitle = document.getElementById('week-title');
+  const weekGrid = document.getElementById('week-grid');
+  const monthTitle = document.getElementById('cal-month-title');
+  const monthHeader = document.getElementById('month-header');
+  const monthGrid = document.getElementById('calendar-grid');
+
+  if (weekTitle) weekTitle.style.display = view === 'week' ? 'block' : 'none';
+  if (weekGrid) weekGrid.style.display = view === 'week' ? 'grid' : 'none';
+  if (monthTitle) monthTitle.style.display = view === 'month' ? 'block' : 'none';
+  if (monthHeader) monthHeader.style.display = view === 'month' ? 'grid' : 'none';
+  if (monthGrid) monthGrid.style.display = view === 'month' ? 'grid' : 'none';
+
+  renderDashboardCalendar();
+}
+function renderWeekCalendar(gridId = 'week-grid', titleId = 'week-title') {
+  const grid = document.getElementById(gridId);
+  const title = document.getElementById(titleId);
   if (!grid || !title) return;
 
   grid.innerHTML = "";
-  
+
   const weekEnd = new Date(currentWeekStart);
   weekEnd.setDate(weekEnd.getDate() + 6);
   title.textContent = `${currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
@@ -296,7 +321,7 @@ function renderWeekCalendar() {
 
     const cell = document.createElement('div');
     cell.className = `week-cell ${cellDate.getTime() === today.getTime() ? 'today' : ''}`;
-    
+
     const dayNum = cellDate.getDate();
     const dayName = cellDate.toLocaleDateString('en-US', { weekday: 'short' });
 
@@ -314,7 +339,82 @@ function renderWeekCalendar() {
 
     grid.appendChild(cell);
   }
-  
+
+  lucide.createIcons();
+}
+function renderMonthCalendar(gridId = 'calendar-grid', titleId = 'cal-month-title') {
+  const grid = document.getElementById(gridId);
+  const title = document.getElementById(titleId);
+  const header = document.getElementById('month-header');
+  if (!grid || !title) return;
+
+  grid.innerHTML = "";
+  const year = currentWeekStart.getFullYear();
+  const month = currentWeekStart.getMonth();
+  title.textContent = currentWeekStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const firstDay = new Date(year, month, 1);
+  let startDayIdx = firstDay.getDay() - 1;
+  if (startDayIdx === -1) startDayIdx = 6;
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let i = 0; i < 42; i++) {
+    const cell = document.createElement('div');
+    let dayDisplay, cellDate;
+    let isOtherMonth = false;
+
+    if (i < startDayIdx) {
+      dayDisplay = daysInPrevMonth - (startDayIdx - i - 1);
+      cellDate = new Date(year, month - 1, dayDisplay);
+      isOtherMonth = true;
+    } else if (i < startDayIdx + daysInMonth) {
+      dayDisplay = i - startDayIdx + 1;
+      cellDate = new Date(year, month, dayDisplay);
+    } else {
+      dayDisplay = i - (startDayIdx + daysInMonth) + 1;
+      cellDate = new Date(year, month + 1, dayDisplay);
+      isOtherMonth = true;
+    }
+
+    cell.className = `cal-cell ${isOtherMonth ? 'other-month' : ''}`;
+    if (cellDate.getTime() === today.getTime()) cell.classList.add('today');
+    cell.innerHTML = `<div class="cal-day-num">${dayDisplay}</div>`;
+
+    const dateStr = cellDate.toISOString().split('T')[0];
+    const cellTasks = tasks.filter(t => t.date === dateStr && !t.done);
+
+    cell.addEventListener('click', () => {
+      if (cellTasks.length > 0) {
+        alert(cellTasks.map(t => t.name).join('\n'));
+      }
+    });
+
+    if (cellTasks.length > 0) {
+      const dots = document.createElement('div');
+      dots.className = 'cal-dots';
+
+      cellTasks.forEach(t => {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        const prio = calculatePriority(t.date);
+        dot.style.background =
+          prio === 'Overdue' ? '#ef4444' :
+          prio === 'High' ? '#f59e0b' :
+          prio === 'Medium' ? '#3b82f6' :
+          '#10b981';
+        dots.appendChild(dot);
+      });
+
+      cell.appendChild(dots);
+    }
+
+    grid.appendChild(cell);
+  }
+
   lucide.createIcons();
 }
 function renderTimelineWeekCalendar() {
