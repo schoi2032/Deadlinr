@@ -361,11 +361,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
   overflow-y: auto;
   backdrop-filter: blur(10px);
 }
-.week-cell:hover { 
-  background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-  border-color: rgba(255,255,255,0.2); 
-  transform: translateY(-4px);
-}
+
 .week-cell.today { 
   border: 2px solid var(--accent-blue); 
   background: linear-gradient(145deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05)); 
