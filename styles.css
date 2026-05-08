@@ -20,13 +20,23 @@
 }
 
 #total {
-  border-color: #f62424;
-  color: #f27b7b;
+  border-color: #10b6e3;
+  color: #ace0ee;
 }
 
 #overdue {
   border-color: #f62424;
   color: #f27b7b;
+}
+
+#done {
+  border-color: #00c64c;
+  color: #8ee4af;
+}
+
+#high {
+  border-color: #ff8b01;
+  color: #f2c289;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
