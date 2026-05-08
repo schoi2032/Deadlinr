@@ -148,7 +148,7 @@ function renderTasks() {
 
   if (dbList && allList) {
     if (filtered.length === 0) {
-      const empty = `<div class="empty-state"><i data-lucide="inbox" size="48"></i><h3 style="text-align=center">Zero Stress.</h3><p>Your list is clear or no results found.</p></div>`;
+      const empty = `<div class="empty-state"><i data-lucide="inbox" size="48"></i><h3 style="text-align: center">Zero Stress.</h3><p>Your list is clear or no results found.</p></div>`;
       dbList.innerHTML = empty;
       allList.innerHTML = empty;
     } else {
