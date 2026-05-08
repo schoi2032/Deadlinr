@@ -19,6 +19,16 @@
   margin-top: 10px;
 }
 
+#total {
+  border-color: #f62424;
+  color: #f27b7b;
+}
+
+#overdue {
+  border-color: #f62424;
+  color: #f27b7b;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
