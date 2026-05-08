@@ -289,7 +289,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 }
 
 .calendar-panel .cal-grid {
-  min-height: 420px;
+  min-height: 75px;
 }
 
 @media (max-width: 1200px) {
@@ -315,16 +315,9 @@ header { display: flex; justify-content: space-between; align-items: center; mar
   background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   border-radius: 20px;
   padding: 16px; 
-  border: 1px solid rgba(255,255,255,0.04); 
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative; 
   overflow: hidden;
   backdrop-filter: blur(10px);
-}
-.cal-cell:hover { 
-  background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-  border-color: rgba(255,255,255,0.2); 
-  transform: translateY(-4px) scale(1.05);
 }
 .cal-cell.today { 
   border: 2px solid var(--accent-blue); 
@@ -363,7 +356,6 @@ header { display: flex; justify-content: space-between; align-items: center; mar
   background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   border-radius: 20px;
   padding: 16px; 
-  border: 1px solid rgba(255,255,255,0.04); 
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative; 
   overflow-y: auto;
@@ -476,9 +468,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
   gap: 8px;
   flex-wrap: wrap;
 }
-.cal-cell {
-  cursor: pointer;
-}
+
 
 #modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px);
@@ -531,7 +521,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 }
 .calendar-panel .cal-grid,
 .calendar-panel .week-grid {
-  min-height: 420px;
+  min-height: 75px;
 }
 .switch-btn {
   padding: 10px 16px;
