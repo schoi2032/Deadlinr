@@ -13,6 +13,11 @@
   --glass: rgba(15, 23, 42, 0.6);
 }
 
+#logo {
+  margin-left: 5px;
+  width: 36px;
+  margin-top: 10px;
+}
 
 * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
 body {
